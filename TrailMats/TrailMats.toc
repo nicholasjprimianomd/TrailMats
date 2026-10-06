@@ -1,0 +1,14 @@
+## Interface: 16001
+## Title: TrailMats
+## Notes: Zone profession companion with optional recipes, supplies and departure advice.
+## Author: Nick
+## Version: 0.3.0
+## OptionalDeps: QuestieDB, Questie
+## SavedVariablesPerCharacter: TrailMatsDB
+
+Data.lua
+Planner.lua
+Sources.lua
+Client.lua
+UI.lua
+Core.lua

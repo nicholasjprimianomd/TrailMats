@@ -1,0 +1,11 @@
+tests/*.reference.lua
+__pycache__/
+*.pyc
+*.zip
+backups/
+installation-manifest.json
+.env
+.env.*
+WTF/
+SavedVariables/
+.DS_Store
