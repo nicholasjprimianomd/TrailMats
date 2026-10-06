@@ -132,6 +132,10 @@ function T.BuildPlan()
         end
     end
     plan.future=T.BuildFuture()
+    plan.leveling={}
+    for _,id in ipairs(T.tabOrder) do
+        if T.skills[id] then plan.leveling[id]=T.BuildLeveling(id) end
+    end
     T.countCache=nil
     return plan
 end

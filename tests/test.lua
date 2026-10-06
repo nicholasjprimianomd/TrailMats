@@ -237,4 +237,38 @@ T.saved.recipes[9999]={profession=185,name="Bristle Whisker Catfish",learned=tru
 T.Refresh(false,false);check(not T.plan.future.byItem[6308],"fresh grey learned recipe overrides future reference")
 T.saved.recipes[9999].difficulty="optimal";T.saved.recipes[9999].mats[6308]=2
 T.Refresh(false,false);check(T.plan.future.byItem[6308][1].material.need==10,"recorded recipe quantities override reference")
+-- Milestone view and price editor operate through the actual addon entrypoints.
+T.saved.recipes={};ranks[129]=20;T.Refresh(false,false);T.SelectProfession(129)
+T.window.leveling.scripts.OnClick()
+check(T.saved.view=="leveling" and screen():find("20 to 75",1,true),"milestone tab shows the actual next goal")
+check(screen():find("ALL MATERIALS",1,true) and screen():find("CRAFT IN THIS ORDER",1,true),"milestone view contains totals and ordered recipes")
+check(not T.window.batch:IsShown() and T.window.prices:IsShown(),"milestone quantities do not inherit optional batch size")
+T.ScrollBy(100000);check(T.window.scroll:GetVerticalScroll()==math.max(0,T.window.content:GetHeight()-T.window.scroll:GetHeight()),"long milestone list stays inside scroll bounds")
+T.window.prices.scripts.OnClick()
+check(screen():find("Peacebloom",1,true) and screen():find("Empty Vial",1,true),"price list includes alternatives, not just selected recipe")
+local popup
+StaticPopupDialogs={}
+StaticPopup_Show=function(name,text,_,data)
+    local dialog=widget();dialog.data=data;dialog.EditBox=widget()
+    dialog.EditBox.SetFocus=function() end;dialog.EditBox.HighlightText=function() end
+    dialog.EditBox.GetParent=function() return dialog end
+    popup={dialog=dialog,definition=StaticPopupDialogs[name]}
+    popup.definition.OnShow(dialog)
+end
+T.EditLevelingPrice(2589);popup.dialog.EditBox:SetText("12")
+popup.definition.OnAccept(popup.dialog)
+check(T.saved.levelingPrices[2589].copper==12,"price popup saves per-item copper")
+popup.dialog.EditBox:SetText("invalid");popup.definition.OnAccept(popup.dialog)
+check(T.saved.levelingPrices[2589].copper==12,"invalid popup entry preserves old quote")
+popup.dialog.EditBox:SetText("");popup.definition.EditBoxOnEnterPressed(popup.dialog.EditBox)
+check(T.saved.levelingPrices[2589]==nil and not popup.dialog:IsShown(),"blank enter clears quote and closes popup")
+T.window.prices.scripts.OnClick();check(not T.window.showPrices,"prices button returns to materials")
+T.window.keep.scripts.OnClick();check(T.saved.view=="keep" and not T.window.prices:IsShown(),"old keep view still works")
+T.Command("mats");check(T.saved.view=="leveling","mats shortcut selects milestone view")
+T.SelectProfession(356);check(screen():find("no crafting-material shopping list",1,true),"gathering tab explains lack of crafting materials")
+T.SelectProfession(165)
+GetTradeSkillItemLink=function() return "|Hitem:2304|h[Light Armor Kit]|h" end
+GetTradeSkillNumMade=function() return 2,2 end
+event("TRADE_SKILL_SHOW")
+check(T.saved.recipes[2152].outputItem==2304 and T.saved.recipes[2152].outputCount==2,"scan captures actual output yield")
 print("PASS: "..checks.." assertions covering tabs, departure states, learned recipes, bags, vendor prices/stock, sources and tooltips")

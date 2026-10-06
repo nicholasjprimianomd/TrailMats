@@ -46,7 +46,7 @@ function T.CreateWindow()
         f:StopMovingOrSizing();local x,y=f:GetCenter();local px,py=UIParent:GetCenter()
         T.saved.x=x-px;T.saved.y=y-py
     end)
-    f.title=label(f.drag,"GameFontNormalLarge",350);f.title:SetPoint("TOPLEFT",18,-14);f.title:SetText("TrailMats  |cffb6c2cc0.5.0|r")
+    f.title=label(f.drag,"GameFontNormalLarge",350);f.title:SetPoint("TOPLEFT",18,-14);f.title:SetText("TrailMats  |cffb6c2cc0.6.0|r")
     f.close=button(f,"Close",55,function() T.saved.hidden=true;f:Hide() end);f.close:SetPoint("TOPRIGHT",-14,-10)
     f.zone=label(f,"GameFontHighlight",484);f.zone:SetPoint("TOPLEFT",18,-42)
     f.destination=button(f,"Next zone",484,function() T.ChangeDestination() end);f.destination:SetPoint("TOPLEFT",18,-65)
@@ -57,6 +57,7 @@ function T.CreateWindow()
     end
     f.overview=button(f,"Overview",110,function() T.saved.view="overview";T.Render() end)
     f.keep=button(f,"Keep for later",140,function() T.saved.view="keep";T.Render() end)
+    f.leveling=button(f,"Leveling mats",146,function() T.saved.view="leveling";T.Render() end)
     f.skill=label(f,"GameFontHighlight",484)
     f.progress=CreateFrame("StatusBar",nil,f);f.progress:SetSize(484,6)
     f.progress:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8");f.progress:SetStatusBarColor(0.36,0.72,0.59)
@@ -81,6 +82,7 @@ function T.CreateWindow()
     f.help=button(f,"Help",52,function() T.Command("help") end);f.help:SetPoint("BOTTOMLEFT",18,35)
     f.refresh=button(f,"Refresh",74,function() T.Command("refresh") end);f.refresh:SetPoint("LEFT",f.help,"RIGHT",6,0)
     f.batch=button(f,"Batch: 3",84,function() T.CycleBatch() end);f.batch:SetPoint("LEFT",f.refresh,"RIGHT",6,0)
+    f.prices=button(f,"Prices",84,function() f.showPrices=not f.showPrices;T.Render() end);f.prices:SetPoint("LEFT",f.refresh,"RIGHT",6,0)
     f.scrollHint=label(f,"GameFontDisableSmall",240);f.scrollHint:SetPoint("BOTTOMRIGHT",-18,40);f.scrollHint:SetJustifyH("RIGHT")
     f.footer=label(f,"GameFontDisableSmall",484);f.footer:SetPoint("BOTTOMLEFT",18,12)
     f.footer:SetText("Optional goals  |  Bag inventory  |  Hover for sources")
@@ -100,14 +102,17 @@ function T.Render()
     if not T.window or not T.plan or not T.window:IsShown() then return end
     local f=T.window;local selected=T.SelectedProfession()
     local keep=T.saved.view=="keep"
-    f.activeKey=tostring(selected)..":"..(keep and "keep" or "overview")
+    local leveling=T.saved.view=="leveling"
+    f.activeKey=tostring(selected)..":"..T.saved.view..(leveling and f.showPrices and ":prices" or "")
     local scroll=f.positions[f.activeKey] or 0
     f.activeProfession=selected
     f.zone:SetText(T.zoneName.."  |  Profession companion")
     local assumed=T.plan.assumed and T.plan.destination~=0 and " (assumed)" or ""
     f.destination:SetText("Next: "..T.destinationNames[T.plan.destination]..assumed.."  - click to change")
     f.batch:SetText("Batch: "..(T.saved.batch or 3))
-    f.batch:SetShown(keep or (selected and T.professions[selected].craft) or false)
+    f.batch:SetShown(not leveling and (keep or (selected and T.professions[selected].craft) or false))
+    f.prices:SetShown(leveling and selected and T.professions[selected].craft or false)
+    f.prices:SetText(f.showPrices and "Materials" or "Prices")
     local x,y=0,101
     for _,id in ipairs(T.tabOrder) do
         local b=f.tabs[id]
@@ -122,7 +127,10 @@ function T.Render()
     end
     f.overview:ClearAllPoints();f.overview:SetPoint("TOPLEFT",18,-y-32)
     f.keep:ClearAllPoints();f.keep:SetPoint("LEFT",f.overview,"RIGHT",8,0)
-    if keep then f.keep:LockHighlight();f.overview:UnlockHighlight() else f.overview:LockHighlight();f.keep:UnlockHighlight() end
+    f.leveling:ClearAllPoints();f.leveling:SetPoint("LEFT",f.keep,"RIGHT",8,0)
+    for view,b in pairs({overview=f.overview,keep=f.keep,leveling=f.leveling}) do
+        if T.saved.view==view then b:LockHighlight() else b:UnlockHighlight() end
+    end
     y=y+32
     local skill=selected and T.skills[selected]
     f.skill:ClearAllPoints();f.skill:SetPoint("TOPLEFT",18,-y-34)
@@ -158,6 +166,7 @@ function T.Render()
     end
     local d=selected and T.plan.professions[selected]
     if not d then row("Learn a profession, then press Refresh.")
+    elseif leveling then T.RenderLeveling(selected,row,f.showPrices)
     elseif keep then
         local profession=T.FutureProfession(selected)
         local future=T.plan.future and T.plan.future.byProfession[profession] or {}

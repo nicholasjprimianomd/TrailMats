@@ -98,7 +98,15 @@ function T.ScanRecipes()
                         local item=reagent and tonumber(reagent:match("item:(%d+)"))
                         if item and required then mats[item]=required else complete=false end
                     end
-                    if complete then storeRecipe(id,profession,recipeName,mats,difficulty,rank);scanned=scanned+1 end
+                    if complete then
+                        storeRecipe(id,profession,recipeName,mats,difficulty,rank);scanned=scanned+1
+                        local record=T.saved.recipes[id]
+                        local output=T.Safe(GetTradeSkillItemLink,i)
+                        local minimum=T.Safe(GetTradeSkillNumMade,i)
+                        if record and output and type(minimum)=="number" and minimum>0 then
+                            record.outputItem=tonumber(output:match("item:(%d+)"));record.outputCount=minimum
+                        end
+                    end
                 end
             end
             if scanned>0 then T.saved.scanned[profession]=true end

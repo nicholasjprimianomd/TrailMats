@@ -1,12 +1,28 @@
-# TrailMats 0.5.0
+# TrailMats 0.6.0
 
 A small zone profession companion for WoW Forever. It offers opportunities, not chores. It never crafts or buys anything.
 
 ## Install or update
 
-Download `TrailMats-0.5.0.zip` from this repository's Releases page. Extract its `TrailMats` folder into your WoW Forever `Interface/AddOns` folder. Keep Questie and QuestieDB installed separately for source references. Restart WoW after installing this update, enable the addon, then type `/tm` or `/tm keep`.
+Download `TrailMats-0.6.0.zip` from this repository's Releases page. Extract its `TrailMats` folder into your WoW Forever `Interface/AddOns` folder. Keep Questie and QuestieDB installed separately for source references. Restart WoW after installing this update, enable the addon, then type `/tm` or `/tm keep`.
 
 The repository's source folder is `TrailMats/`. Do not copy the repository's outer folder into AddOns. Existing per-character settings are preserved.
+
+## Leveling materials (0.6.0)
+
+Open `/tm mats` or click **Leveling mats**, then choose Leatherworking, Cooking, or First Aid. The target is the next skill milestone: 75, 150, or 225, regardless of how far ahead you have trained. At a cap, the plan previews the next rank and tells you training is required. Fishing and Skinning explain their gathering role instead of inventing a crafting shopping list.
+
+The tab shows every ingredient for the selected route, including vendor supplies and intermediate crafts, followed by the recipes in crafting order. **Need** is total use, **Have** is current bags, **Made** is supplied by earlier planned crafts, and **Missing** is the remaining amount. Bags and crafted outputs are allocated once across the entire route. Cured hides and belts are prepared when needed; useful surplus is listed separately. Recorded live ingredients and minimum output quantities override reference data.
+
+**Prices** opens the ingredients for all reviewed alternatives. Click **Set unit price** and enter copper per item (100 copper = 1 silver); blank clears the quote. Quotes are saved per character and dated. Update them when your market changes. Open-vendor prices are used for basic supplies when no manual quote exists, respecting whole packs and available stock. Auction House prices are not scanned automatically.
+
+The comparison minimizes estimated additional material spending among the supported full-band routes, using current bags to reduce purchases. It can combine different recipes at reviewed band boundaries. A complete price comparison is labeled **Lowest estimated material cost among reviewed routes**. If some routes lack prices, that limitation stays visible; unknown prices are never counted as free. With no complete prices, it favors routes with a greater fraction of raw inputs covered by bags and planned outputs, with the researched order breaking ties.
+
+This is a limited route comparison, not a global optimizer of every recipe, within-band mixture, or market transaction. Preparation of missing intermediate items uses the supported crafting recipe; buying those intermediates is not compared. Training, recipe acquisition, gathering time, resale income, and the value of owned materials are excluded from the cost. Recipe availability is shown separately; obtain required recipes before following a forecast. No buying or crafting is automated.
+
+Counts are estimates scaled from researched skill bands, not guaranteed skill-ups or exact probabilities. Stop when the listed skill is reached; bags and skill changes refresh the list. Extra intermediate crafts receive no assumed skill credit. The optional 1/3/5 batch control does not affect milestone plans.
+
+Research currently supports complete routes through **225**. The beta sources do not establish a sufficiently verified full route to 300, so that target shows an explicit coverage limit. It never shows a partial list as a complete shopping list.
 
 ## Keep for later (0.5.0)
 
@@ -35,7 +51,7 @@ Validation: the prior Lua 5.1 regression checks and new tests passed for unlearn
 8. Scroll with the wheel or drag the scrollbar thumb. The scrollbar hides when all content fits, and tabs remember their own scroll positions for the session. Drag the title bar to move the window. **Close** hides it; `/tm` brings it back.
 9. **Recommended leveling range** shows a reviewed crafting band and the next step. The skill bar shows your current skill against your trained cap; it is not an efficiency score. Fishing shows a recommended base-skill range with the named lure needed at its lower end, alongside the effective-skill no-escape target. Skinning shows named-beast coverage, explicitly labeled as a Classic reference.
 
-`/tm keep`, `/tm help`, `/tm refresh`, `/tm quiet` (zone notices), `/tm tips` (tooltips), `/tm auto` (reset destination and recipe choices), `/tm status`.
+`/tm mats`, `/tm keep`, `/tm help`, `/tm refresh`, `/tm quiet` (zone notices), `/tm tips` (tooltips), `/tm auto` (reset destination and recipe choices), `/tm status`.
 
 ## What the advice means
 
@@ -69,9 +85,10 @@ Run from the repository root with Lua 5.1:
 ```sh
 luac5.1 -p TrailMats/*.lua
 lua5.1 tests/test.lua .
+lua5.1 tests/leveling.lua .
 ```
 
-The regression harness uses simulated WoW APIs, including the 0.5.0 widgets and future-material view. It does not verify in-game appearance. Optional source-data integration checks require Python, `cbor2`, and separately installed Questie/QuestieDB:
+The regression harness uses simulated WoW APIs, including milestone navigation, price editing, and output-yield scans. The economic checks cover every starting skill from 1 through 224 for all three crafting professions, route switching, intermediate materials, incomplete prices, and merchant packs/stock. It does not verify in-game appearance. Optional source-data integration checks require Python, `cbor2`, and separately installed Questie/QuestieDB:
 
 ```sh
 python tests/real_database.py "/path/to/World of Warcraft/_classic_beta_/Interface/AddOns"
