@@ -8,16 +8,18 @@ local function flush()
     local work=timers;timers={};for _,fn in ipairs(work) do fn() end
 end
 local methods={}
-for _,name in ipairs({"SetSize","SetPoint","SetWidth","SetHeight","ClearAllPoints","SetClampedToScreen","SetMovable","EnableMouse","RegisterForDrag","StartMoving","StopMovingOrSizing","SetBackdrop","SetBackdropColor","SetBackdropBorderColor","SetJustifyH","SetJustifyV","SetScrollChild","SetOwner","SetAllPoints","SetColorTexture","SetVertexColor","SetOrientation","SetValueStep","SetStatusBarTexture","SetStatusBarColor","LockHighlight","UnlockHighlight"}) do
+for _,name in ipairs({"SetSize","SetPoint","SetWidth","SetHeight","ClearAllPoints","SetClampedToScreen","SetMovable","EnableMouse","RegisterForDrag","StartMoving","StopMovingOrSizing","SetBackdrop","SetBackdropColor","SetBackdropBorderColor","SetJustifyH","SetJustifyV","SetScrollChild","SetOwner","SetAllPoints","SetColorTexture","SetTexture","SetVertexColor","SetOrientation","SetValueStep","SetStatusBarTexture","SetStatusBarColor","LockHighlight","UnlockHighlight"}) do
     methods[name]=function() end
 end
 function methods:SetSize(w,h) self.width=w;self.height=h end
 function methods:SetWidth(w) self.width=w end
 function methods:SetHeight(h) self.height=h end
+function methods:SetPoint(...) self.point={...} end
 function methods:GetHeight() return self.height or 347 end
 function methods:GetStringHeight()
     local n=0
-    for line in (self.text or ""):gmatch("[^\n]+") do n=n+math.max(1,math.ceil(#line/58)) end
+    local plain=(self.text or ""):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+    for line in plain:gmatch("[^\n]+") do n=n+math.max(1,math.ceil(#line/math.max(1,(self.width or 400)/7))) end
     return n*14
 end
 function methods:EnableMouseWheel() end
@@ -97,7 +99,8 @@ BuyMerchantItem=function() error("must never buy") end
 DoTradeSkill=function() error("must never craft") end
 
 event("ADDON_LOADED","TrailMats");event("PLAYER_LOGIN")
-check(T.saved.view=="keep","upgrade defaults to keep view")
+check(T.saved.view=="overview","fresh install starts on Now")
+check(not T.tracker:IsShown() and not T.saved.trackProfession,"tracker starts opt-in")
 check(T.plan.future.byItem[2318]~=nil,"held leather has future uses before recipe scan")
 check(not T.plan.opportunities[165],"future reference does not grant learned opportunities")
 T.window.overview.scripts.OnClick()
@@ -115,7 +118,10 @@ for _,id in ipairs(T.tabOrder) do check(T.window.tabs[id]:IsShown(),"possessed p
 T.window.tabs[129].scripts.OnClick();check(T.saved.profession==129,"tab changes selection")
 local function screen()
  local lines={}
- for _,r in ipairs(T.window.rows) do if r:IsShown() then lines[#lines+1]=r.label.text end end
+ for _,r in ipairs(T.window.rows) do if r:IsShown() then
+    lines[#lines+1]=r.label.text
+    if r.value and r.value:IsShown() then lines[#lines+1]=r.value.text end
+ end end
  return table.concat(lines,"\n")
 end
 check(not screen():find("Chunk of Boar Meat",1,true),"First Aid tab does not show cooking shopping list")
@@ -134,7 +140,7 @@ local op=T.CurrentOpportunity()
 check(op and op.batch==3,"fresh learned recipe offers optional three crafts")
 check(op.materials[1].need==6 and op.materials[1].missing==1,"live ingredients times batch minus bags")
 check(op.materials[2].missing==3,"vendor supply tied to exact recipe")
-check(screen():find("Try 3 crafts of",1,true),"quantity explains what will be made")
+check(screen():find("Get supplies for Light Armor Kit",1,true) and screen():find("Need 3",1,true),"short action uses raw materials already held and shows missing supplies")
 check(not screen():find("~",1,true) and not screen():find("[\128-\255]"),"no tilde or unsupported glyphs")
 IsTradeSkillLinked=function() return true end
 GetTradeSkillReagentInfo=function() return "wrong",nil,999 end
@@ -241,7 +247,16 @@ T.Refresh(false,false);check(T.plan.future.byItem[6308][1].material.need==10,"re
 T.saved.recipes={};ranks[129]=20;T.Refresh(false,false);T.SelectProfession(129)
 T.window.leveling.scripts.OnClick()
 check(T.saved.view=="leveling" and screen():find("20 to 75",1,true),"milestone tab shows the actual next goal")
-check(screen():find("ALL MATERIALS",1,true) and screen():find("CRAFT IN THIS ORDER",1,true),"milestone view contains totals and ordered recipes")
+check(screen():find("Still needed",1,true) and not screen():find("Craft in order",1,true),"material view separates recipes from shopping list")
+local function clickRow(text)
+    for _,r in ipairs(T.window.rows) do
+        if r:IsShown() and r.action and r.action:IsShown() and r.action.text==text then r.action.scripts.OnClick();return end
+    end
+    error("No visible row button: "..text)
+end
+clickRow("Recipes")
+check(screen():find("Craft in order",1,true) and screen():find("Check recipe",1,true),"recipe page preserves order and availability")
+clickRow("Materials")
 check(not T.window.batch:IsShown() and T.window.prices:IsShown(),"milestone quantities do not inherit optional batch size")
 T.ScrollBy(100000);check(T.window.scroll:GetVerticalScroll()==math.max(0,T.window.content:GetHeight()-T.window.scroll:GetHeight()),"long milestone list stays inside scroll bounds")
 T.window.prices.scripts.OnClick()
@@ -262,13 +277,91 @@ popup.dialog.EditBox:SetText("invalid");popup.definition.OnAccept(popup.dialog)
 check(T.saved.levelingPrices[2589].copper==12,"invalid popup entry preserves old quote")
 popup.dialog.EditBox:SetText("");popup.definition.EditBoxOnEnterPressed(popup.dialog.EditBox)
 check(T.saved.levelingPrices[2589]==nil and not popup.dialog:IsShown(),"blank enter clears quote and closes popup")
-T.window.prices.scripts.OnClick();check(not T.window.showPrices,"prices button returns to materials")
+T.window.prices.scripts.OnClick();check(T.window.planPage=="materials","prices button returns to materials")
 T.window.keep.scripts.OnClick();check(T.saved.view=="keep" and not T.window.prices:IsShown(),"old keep view still works")
 T.Command("mats");check(T.saved.view=="leveling","mats shortcut selects milestone view")
-T.SelectProfession(356);check(screen():find("no crafting-material shopping list",1,true),"gathering tab explains lack of crafting materials")
+T.SelectProfession(356);check(screen():find("Fish while you quest",1,true) and screen():find("Materials: Cooking",1,true),"gathering tab links the paired profession")
 T.SelectProfession(165)
 GetTradeSkillItemLink=function() return "|Hitem:2304|h[Light Armor Kit]|h" end
 GetTradeSkillNumMade=function() return 2,2 end
 event("TRADE_SKILL_SHOW")
 check(T.saved.recipes[2152].outputItem==2304 and T.saved.recipes[2152].outputCount==2,"scan captures actual output yield")
-print("PASS: "..checks.." assertions covering tabs, departure states, learned recipes, bags, vendor prices/stock, sources and tooltips")
+-- Compact screens, local targets and an independently pinned tracker.
+T.qdb={Item={npcDrops=function(id) return itemNpcs[id] end},
+    Npc={name=function(id) return npcNames[id] end,spawns=function(id) return npcSpawns[id] end}}
+T.sourceCache={};T.saved.observed={};T.saved.batch=3
+T.saved.recipes={[2152]={id=2152,profession=165,name="Light Armor Kit",learned=true,rank=20,difficulty="optimal",mats={[2318]=2,[2320]=1}}}
+T.saved.scanned[165]=true
+ranks[165]=20;inventory[2318]=0;inventory[2320]=0;currentMap=1439
+T.Refresh(false,false);T.SelectProfession(165);T.Command("now")
+check(T.NextAction(165).text=="Gather for Light Armor Kit","missing first craft calls for raw materials")
+local needs=T.ZoneNeeds(165)
+local leather
+for _,m in ipairs(needs.here) do if m.item==2318 then leather=m end;check(not T.levelingSupplies[m.item],"local list excludes vendor supplies") end
+check(leather and leather.missing>3 and needs.target==75,"local list uses full milestone needs, not batch")
+check(#needs.vendor>0,"vendor needs stay separate")
+check(#T.ZoneNeeds(393).here==#needs.here,"Skinning follows Leatherworking material goals")
+check(screen():find("This zone (est.)",1,true),"forecast remains visibly estimated")
+local source,detail=T.ZoneSource(2318)
+check(source:find("*",1,true) and detail:find("candidate",1,true),"reference source remains marked")
+T.saved.observed[2318]={[2069]={area=148}};T.sourceCache[2318]=nil
+source,detail=T.ZoneSource(2318)
+check(source=="Moonstalker" and detail:find("Near 43, 40",1,true),"observed local source preferred; coordinates move to hover")
+npcSpawns[2069][331]={{20,20}};T.sourceCache[2318]=nil
+check(T.ZoneSource(2318,331):find("*",1,true),"an observation does not verify another zone")
+npcSpawns[2069][331]=nil;T.sourceCache[2318]=nil
+T.window.track.scripts.OnClick()
+check(T.tracker:IsShown() and T.saved.trackProfession==165,"Track pins selected profession")
+check(T.tracker.lines[1].text~="" and T.tracker.zone.text:find("est.",1,true),"tracker shows estimated local count")
+T.SelectProfession(129)
+check(T.saved.trackProfession==165 and T.tracker.title.text:find("Leatherworking",1,true),"tab change cannot silently repin tracker")
+T.window.close.scripts.OnClick()
+inventory[2318]=5;inventory[2320]=3;event("BAG_UPDATE_DELAYED")
+check(not T.window:IsShown() and T.tracker.action.text=="Craft 2 x Light Armor Kit","bag change updates ready crafts while window closed")
+check(T.NextAction(165).text=="Craft 2 x Light Armor Kit","ready count is limited by actual materials")
+inventory[2318]=1000;event("BAG_UPDATE_DELAYED")
+check(T.NextAction(165).text=="Craft 3 x Light Armor Kit","ready action never exceeds chosen batch")
+for _,m in ipairs(T.ZoneNeeds(165).here) do check(m.item~=2318,"covered material leaves the zone checklist") end
+inventory[2318]=0;event("BAG_UPDATE_DELAYED")
+C_Map.GetMapInfo=function() return {parentMapID=0} end
+currentMap=9999;event("ZONE_CHANGED_NEW_AREA")
+check(T.area==0 and #T.ZoneNeeds(165).here==0 and T.tracker.lines[1].text=="","unknown zone clears old local objectives")
+currentMap=1439;event("ZONE_CHANGED_NEW_AREA")
+check(T.tracker.lines[1].text~="","returning to supported zone restores goals")
+T.tracker.open.scripts.OnClick()
+check(T.window:IsShown() and T.saved.profession==165 and T.saved.view=="overview","tracker Open selects pinned profession and Now")
+ranks[165]=21;T.Refresh(false,false)
+check(T.tracker.action.text=="Open Leatherworking to refresh","stale recipes never produce a craft action")
+ranks[165]=75;T.Refresh(false,false)
+check(T.tracker.action.text=="Train Leatherworking","skill cap gives a training action")
+ranks[165]=20;T.Refresh(false,false)
+T.tracker.scripts.OnDragStop();check(T.saved.trackX==0 and T.saved.trackY==0,"tracker position persists")
+T.tracker.close.scripts.OnClick();check(not T.saved.trackProfession and not T.tracker:IsShown(),"Hide unpins tracker")
+T.Command("track");check(T.tracker:IsShown(),"tracker shortcut works")
+T.skills[165]=nil;T.RenderTracker();check(not T.tracker:IsShown(),"losing tracked profession hides obsolete tracker")
+T.ReadSkills();T.Command("track")
+
+-- Every profession fits in one tab row; detailed explanations stay on hover.
+local y=T.window.tabs[165].point[3]
+for _,id in ipairs(T.tabOrder) do check(T.window.tabs[id].point[3]==y,"profession tabs use a single row") end
+local function wordCount(text) local n=0;for _ in text:gmatch("%S+") do n=n+1 end;return n end
+check(wordCount(screen())<130,"Now avoids paragraphs in the main view")
+T.window.keep.scripts.OnClick();check(wordCount(screen())<180,"Keep shows concise rows")
+T.Command("mats");T.window.planPage="materials";T.Render()
+check(not screen():find("Bags allocated",1,true) and not screen():find("guarantee",1,true),"material accounting explanations stay in tooltips")
+inventory[2318]=1000;T.Refresh(false,false)
+check(not screen():find("Light Leather",1,true),"covered material hidden in missing-only view")
+clickRow("Show all")
+check(screen():find("Light Leather",1,true) and screen():find("Covered",1,true),"Show all restores covered route ingredients")
+clickRow("Missing only");clickRow("Recipes")
+local hasAcquisition=false
+for _,r in ipairs(T.window.rows) do
+    if r:IsShown() and type(r.detail)=="string" and r.detail:find("Obtain the recipe",1,true) then hasAcquisition=true end
+end
+check(hasAcquisition,"recipe acquisition is preserved in hover details")
+clickRow("Materials")
+local chatBefore=#messages;T.Command("help")
+check(T.saved.view=="help" and #messages==chatBefore and screen():find("Using TrailMats",1,true),"Help is a page, not chat spam")
+T.saved.view="keep";event("ADDON_LOADED","TrailMats")
+check(T.saved.view=="keep","existing view choice survives upgrade")
+print("PASS: "..checks.." assertions covering UI navigation, tracker updates, source evidence, recipes, bags, vendor stock and tooltips")

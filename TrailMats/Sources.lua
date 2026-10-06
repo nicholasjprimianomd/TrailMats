@@ -41,7 +41,11 @@ function T.GetSources(item)
                     local ok,x,y=pcall(lib.EraToForever,area,first[1],first[2])
                     if ok then first={x,y} end
                 end
-                result.areas[area][#result.areas[area]+1]={name=name,id=id,evidence=evidence,position=first}
+                local localEvidence=evidence
+                if evidence=="Observed on this character" and area~=areaOverride then
+                    localEvidence="Source observed elsewhere; location unverified"
+                end
+                result.areas[area][#result.areas[area]+1]={name=name,id=id,evidence=localEvidence,position=first}
             end
         end
         if areaOverride and not (spawns and spawns[areaOverride]) then

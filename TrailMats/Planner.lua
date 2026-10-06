@@ -272,7 +272,7 @@ function T.MarkMerchant()
                 mark=anchor:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
                 mark:SetPoint("BOTTOMLEFT",anchor,"TOPLEFT",0,2);T.merchantMarks[slot]=mark
             end
-            mark:SetText("TrailMats: "..r.amount.." suggested");mark:Show()
+            mark:SetText("TrailMats: "..r.amount);mark:Show()
         end
     end
 end

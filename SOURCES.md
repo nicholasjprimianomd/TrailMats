@@ -1,5 +1,13 @@
 # Data provenance and implementation notes
 
+## 0.7.0 interface and questing tracker, checked 2026-10-06
+
+The authors' feature descriptions for [Questie](https://www.curseforge.com/wow/addons/questie) and [Profession Shopping List](https://www.curseforge.com/wow/addons/profession-shopping-list) informed the use of compact tracked objectives, reagent counts and hover details. This is original Lua UI code using standard WoW frames, fonts and item icons; no third-party UI code or artwork was copied.
+
+Now, Keep and Plan separate immediate crafting, held-item reserves and the full milestone plan. Recipe order, prices and help have their own views. The optional tracker pins a profession and refreshes with bag, skill and zone events while the main window is hidden. Local objectives use only missing milestone materials with existing source records; they do not assert nearest targets, farming efficiency, or guaranteed catches. Gathering tabs use the paired crafting plan when owned.
+
+The existing price comparison and researched recipe catalog are unchanged. Guide uncertainty and estimated totals remain visible in short labels; explanations and accounting move to tooltips. Source observations are scoped to their recorded zone instead of verifying every database spawn of that creature. Tests cover these behaviors under simulated game APIs, plus the separately installed source database. No live in-game visual verification was performed.
+
 ## 0.6.0 milestone planner, checked 2026-10-06
 
 The [Forever Leatherworking](https://www.wow-professions.com/forever/leatherworking-leveling-guide), [Cooking](https://www.wow-professions.com/forever/cooking-leveling-guide), and [First Aid](https://www.wow-professions.com/forever/first-aid-leveling-guide) authors describe research in the beta client. Recipe reagent facts, selected planning bands, and approximate craft counts inform the small factual catalog in LevelingData.lua. The addon independently enumerates eligible sequences to the next milestone and simulates inventory consumption to compare their material cost. It does not bundle guide prose, artwork, third-party code, or a copied full profession database.

@@ -1,8 +1,8 @@
 ## Interface: 16001
 ## Title: TrailMats
-## Notes: Zone profession companion with optional recipes, supplies and departure advice.
+## Notes: What to craft, gather and keep while leveling.
 ## Author: Nick
-## Version: 0.6.0
+## Version: 0.7.0
 ## OptionalDeps: QuestieDB, Questie
 ## SavedVariablesPerCharacter: TrailMatsDB
 
@@ -14,6 +14,7 @@ Leveling.lua
 Planner.lua
 Sources.lua
 Client.lua
+Actions.lua
 LevelingUI.lua
 UI.lua
 Core.lua

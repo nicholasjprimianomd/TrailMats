@@ -15,12 +15,12 @@ function T.Refresh(scan,announce)
     if scan then T.ScanRecipes() end
     T.ReadMerchant()
     T.plan=T.BuildPlan()
-    T.Render();T.MarkMerchant()
+    T.Render();T.RenderTracker();T.MarkMerchant()
     local key=T.area~=0 and T.area or T.zoneName
     if announce and key~=lastArea then
         lastArea=key
         if T.saved.announce then
-            T.Print(T.zoneName..": /tm shows each profession's departure advice. Next zone: "..T.destinationNames[T.plan.destination]..".")
+            T.Print(T.zoneName.." | /tm")
         end
     end
 end
@@ -41,22 +41,16 @@ end
 function T.Command(command)
     command=(command or ""):lower():match("^%s*(.-)%s*$")
     if command=="refresh" then T.ConnectDatabase();T.Refresh(true,false)
-    elseif command=="keep" or command=="mats" then
-        T.saved.view=command=="mats" and "leveling" or "keep";T.saved.hidden=false;T.window:Show();T.Render()
+    elseif command=="keep" or command=="mats" or command=="now" or command=="help" then
+        T.saved.view=command=="mats" and "leveling" or command=="now" and "overview" or command
+        T.saved.hidden=false;T.window:Show();T.Render()
+    elseif command=="track" then T.ToggleTracker()
     elseif command=="quiet" then T.saved.announce=not T.saved.announce;T.Print("Zone notices "..(T.saved.announce and "on." or "off."))
     elseif command=="tips" then T.saved.tooltips=not T.saved.tooltips;T.Print("Tooltips "..(T.saved.tooltips and "on." or "off."))
     elseif command=="auto" then T.saved.destinations={};T.saved.selected={};T.Refresh(false,false);T.Print("Default destinations restored.")
     elseif command=="status" then
-        T.Print("v0.6.0 | "..T.zoneName.." | QuestieDB "..(T.qdb and "connected" or "unavailable").." | milestone materials + departure advice")
+        T.Print("v0.7.0 | "..T.zoneName.." | QuestieDB "..(T.qdb and "connected" or "unavailable"))
         for _,id in ipairs(T.order) do local s=T.skills[id];if s then T.Print(T.professions[id].name.." "..s.rank.."/"..s.cap..(T.saved.scanned[id] and " (recipes read)" or "")) end end
-    elseif command=="help" then
-        T.Print("/tm opens TrailMats. Choose a profession tab. Open that profession once to find learned recipes that still give skill.")
-        T.Print("/tm keep opens Keep for later: save materials for basic recipes, even before learning them. Hover items for advice across your professions.")
-        T.Print("/tm mats opens Leveling mats: recipes and total materials to the next 75/150/225 milestone. Prices compares your entered unit prices; missing prices are unknown.")
-        T.Print("Drag the scrollbar or use the mouse wheel. Recommended ranges are optional; hover them for evidence.")
-        T.Print("Check the Next zone button; click it to change the destination. Assumed routes are labeled.")
-        T.Print("Easy opportunities are optional batches of 1, 3 or 5 crafts. Hover sources for evidence. Vendor hints show actual stock and price; buy or craft yourself only if you want to.")
-        T.Print("Reference means not verified on this Forever character; Not assessed means no reviewed rule. /tm quiet toggles zone notices; /tm tips toggles tooltips.")
     else
         T.saved.hidden=T.window:IsShown()
         T.window:SetShown(not T.saved.hidden)
@@ -72,11 +66,11 @@ frame:SetScript("OnEvent",function(_,event,name)
             if type(T.saved[key])~="table" then T.saved[key]={} end
         end
         if type(T.saved.levelingPrices)~="table" then T.saved.levelingPrices={} end
-        if T.saved.view~="overview" and T.saved.view~="keep" and T.saved.view~="leveling" then T.saved.view="keep" end
+        if T.saved.view~="overview" and T.saved.view~="keep" and T.saved.view~="leveling" and T.saved.view~="help" then T.saved.view="overview" end
         if T.saved.announce==nil then T.saved.announce=true end
         if T.saved.tooltips==nil then T.saved.tooltips=true end
         if T.saved.batch~=1 and T.saved.batch~=3 and T.saved.batch~=5 then T.saved.batch=3 end
-        T.ConnectDatabase();T.ReadSkills();T.ReadZone();T.CreateWindow();T.InstallTooltips();T.InstallMerchantHook()
+        T.ConnectDatabase();T.ReadSkills();T.ReadZone();T.CreateWindow();T.CreateTracker();T.InstallTooltips();T.InstallMerchantHook()
         _G.SLASH_TRAILMATS1="/tm";_G.SLASH_TRAILMATS2="/trailmats"
         SlashCmdList.TRAILMATS=T.Command
     elseif event=="PLAYER_LOGIN" then
