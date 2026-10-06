@@ -2,11 +2,13 @@
 ## Title: TrailMats
 ## Notes: Zone profession companion with optional recipes, supplies and departure advice.
 ## Author: Nick
-## Version: 0.3.0
+## Version: 0.5.0
 ## OptionalDeps: QuestieDB, Questie
 ## SavedVariablesPerCharacter: TrailMatsDB
 
 Data.lua
+Ranges.lua
+Future.lua
 Planner.lua
 Sources.lua
 Client.lua

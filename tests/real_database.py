@@ -1,4 +1,5 @@
 """Read selected facts from the installed QuestieDB; keep generated data temporary."""
+import argparse
 import base64
 import re
 import subprocess
@@ -6,7 +7,9 @@ import tempfile
 from pathlib import Path
 import cbor2
 
-addons = Path('/home/nick/Games/battlenet/drive_c/Program Files (x86)/World of Warcraft/_classic_beta_/Interface/AddOns')
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("addons", type=Path, help="WoW Interface/AddOns directory containing Questie and QuestieDB")
+addons = parser.parse_args().addons
 metadata = {}
 for line in (addons / 'QuestieDB/QuestieDB_Camelot.toc').open():
     match = re.match(r'## X-(Item|Npc)-(\d+)-(\d+|S): (.*)', line)

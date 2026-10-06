@@ -11,7 +11,10 @@ function T.ItemName(item)
     return safe(C_Item and C_Item.GetItemNameByID,item) or safe(GetItemInfo,item) or T.items[item] or ("Item #"..item)
 end
 function T.Count(item)
-    return safe(C_Item and C_Item.GetItemCount,item,false,false,false) or safe(GetItemCount,item,false,false) or 0
+    if T.countCache and T.countCache[item]~=nil then return T.countCache[item] end
+    local count=safe(C_Item and C_Item.GetItemCount,item,false,false,false) or safe(GetItemCount,item,false,false) or 0
+    if T.countCache then T.countCache[item]=count end
+    return count
 end
 
 function T.ReadSkills()

@@ -8,7 +8,7 @@ local function flush()
     local work=timers;timers={};for _,fn in ipairs(work) do fn() end
 end
 local methods={}
-for _,name in ipairs({"SetSize","SetPoint","SetWidth","SetHeight","ClearAllPoints","SetClampedToScreen","SetMovable","EnableMouse","RegisterForDrag","StartMoving","StopMovingOrSizing","SetBackdrop","SetBackdropColor","SetBackdropBorderColor","SetJustifyH","SetJustifyV","SetScrollChild","SetOwner"}) do
+for _,name in ipairs({"SetSize","SetPoint","SetWidth","SetHeight","ClearAllPoints","SetClampedToScreen","SetMovable","EnableMouse","RegisterForDrag","StartMoving","StopMovingOrSizing","SetBackdrop","SetBackdropColor","SetBackdropBorderColor","SetJustifyH","SetJustifyV","SetScrollChild","SetOwner","SetAllPoints","SetColorTexture","SetVertexColor","SetOrientation","SetValueStep","SetStatusBarTexture","SetStatusBarColor","LockHighlight","UnlockHighlight"}) do
     methods[name]=function() end
 end
 function methods:SetSize(w,h) self.width=w;self.height=h end
@@ -38,6 +38,14 @@ function methods:GetItem() return "Item",self.item end
 function methods:AddLine(text) self.lines[#self.lines+1]=text end
 local function widget() return setmetatable({scripts={},events={},shown=true,lines={}},{__index=methods}) end
 function methods:CreateFontString() return widget() end
+function methods:CreateTexture() return widget() end
+function methods:SetThumbTexture() self.thumb=widget() end
+function methods:GetThumbTexture() return self.thumb end
+function methods:SetMinMaxValues(low,high) self.min=low;self.max=high end
+function methods:SetValue(value)
+    self.value=value
+    if self.scripts.OnValueChanged then self.scripts.OnValueChanged(self,value) end
+end
 CreateFrame=function() return widget() end
 UIParent=widget();WorldFrame=widget();GameTooltip=widget()
 GameTooltipTextLeft1=widget()
@@ -89,6 +97,11 @@ BuyMerchantItem=function() error("must never buy") end
 DoTradeSkill=function() error("must never craft") end
 
 event("ADDON_LOADED","TrailMats");event("PLAYER_LOGIN")
+check(T.saved.view=="keep","upgrade defaults to keep view")
+check(T.plan.future.byItem[2318]~=nil,"held leather has future uses before recipe scan")
+check(not T.plan.opportunities[165],"future reference does not grant learned opportunities")
+T.window.overview.scripts.OnClick()
+check(T.saved.view=="overview","overview button restores live crafting view")
 check(T.skills[129] and T.skills[356],"secondary skills survive nil primary slot")
 check(T.plan.destination==148 and T.plan.assumed,"Teldrassil defaults explicitly to Darkshore")
 check(T.plan.professions[165].state=="ready","crafting 20 can continue in Darkshore")
@@ -127,6 +140,7 @@ IsTradeSkillLinked=function() return true end
 GetTradeSkillReagentInfo=function() return "wrong",nil,999 end
 event("TRADE_SKILL_UPDATE");check(T.saved.recipes[2152].mats[2318]==2,"linked recipes ignored")
 IsTradeSkillLinked=nil
+GetTradeSkillReagentInfo=function(_,j) return j==1 and "Light Leather" or "Coarse Thread",nil,j==1 and 2 or 1 end
 ranks[165]=21;T.Refresh(false,false)
 check(not T.CurrentOpportunity(),"stale difficulty is never used after skill changes")
 ranks[165]=20;T.Refresh(false,false)
@@ -201,4 +215,26 @@ T.Command("");check(T.window:IsShown(),"slash command reopens")
 LibQuestieDB=nil;QuestieLoader=nil;T.qdb=nil;T.dropDB=nil;T.zoneDB=nil
 T.ConnectDatabase();T.Refresh(false,false);check(T.plan~=nil,"missing database degrades safely")
 ranks[165]=75;T.Refresh(false,false);check(not T.plan.opportunities[165],"trained cap blocks further crafting suggestions")
+-- Forecasts remain separate from learned recipes and merchant purchases.
+ranks[165]=20;ranks[185]=20;ranks[129]=20
+inventory[6308]=2;inventory[783]=1;T.saved.recipes={};T.Refresh(false,false)
+local future=T.plan.future
+check(future.byItem[6308][1].recipe.name=="Bristle Whisker Catfish","unlearned fish recipe has a future use")
+check(not future.byItem[6308][1].recipe.learned,"reference recipe is not marked learned")
+check(future.byItem[6308][1].recipe.trainRank,"future recipe beyond trained cap prompts training")
+check(future.byItem[6308][1].material.need==3,"future reserve respects selected batch")
+check(future.byItem[6308][1].material.have==2,"future reserve reads current bags")
+check(not future.byItem[4289],"vendor salt is not a raw material reserve")
+check(not T.plan.opportunities[185],"future fish recipe cannot become a live crafting suggestion")
+T.SelectProfession(129);GameTooltip.lines={};GameTooltip.trailMatsItem=nil;GameTooltip.item="|Hitem:6308|h[Fish]|h"
+T.AddItemTooltip(GameTooltip)
+check(table.concat(GameTooltip.lines," "):find("Bristle Whisker Catfish",1,true),"future item hints cover owned professions across tabs")
+local lineCount=#GameTooltip.lines;T.AddItemTooltip(GameTooltip)
+check(#GameTooltip.lines==lineCount,"future item hints are not duplicated")
+T.Command("keep");check(T.saved.view=="keep" and T.window:IsShown(),"keep command opens future view")
+T.CycleBatch();check(T.plan.future.byItem[6308][1].material.need==5,"batch changes update future reserves")
+T.saved.recipes[9999]={profession=185,name="Bristle Whisker Catfish",learned=true,rank=20,difficulty="trivial",mats={[6308]=1}}
+T.Refresh(false,false);check(not T.plan.future.byItem[6308],"fresh grey learned recipe overrides future reference")
+T.saved.recipes[9999].difficulty="optimal";T.saved.recipes[9999].mats[6308]=2
+T.Refresh(false,false);check(T.plan.future.byItem[6308][1].material.need==10,"recorded recipe quantities override reference")
 print("PASS: "..checks.." assertions covering tabs, departure states, learned recipes, bags, vendor prices/stock, sources and tooltips")

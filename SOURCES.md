@@ -1,5 +1,18 @@
 # Data provenance and implementation notes
 
+## 0.5.0 future material reserves, checked 2026-10-05
+
+Future.lua adds a limited basic-recipe reference layer separate from learned/live crafting. Ingredient tuples and trainer/vendor/quest source categories were checked against the same Forever [Cooking](https://www.wow-professions.com/forever/cooking-leveling-guide), [Leatherworking](https://www.wow-professions.com/forever/leatherworking-leveling-guide) and [First Aid](https://www.wow-professions.com/forever/first-aid-leveling-guide) sources. Existing starter tuples are reused. Additions cover leather conversion and curing, belts/pants, catfish, clams, coyote steak, crab cake, pork ribs and heavy wool bandages. No vendor coordinates or precise learning requirements are inferred from the guide's recommended skill bands.
+
+Reserve counts are derived from the user's 1/3/5 craft batch, not copied shopping lists or estimates of crafts to level. Raw-material coverage excludes basic vendor supplies and is capped per ingredient. Held items are suggested regardless of how far ahead their supported future use lies. The catalog remains limited; absence is not evidence that an item should be sold. Source categories describe the reference recipe, and recorded learned reagent quantities take priority. Runtime tests use simulated APIs and do not verify appearance or beta recipe changes inside the live game.
+
+## 0.4.0 efficiency ranges, checked 2026-10-05
+
+- Fishing: the [Forever fishing overview](https://www.wowhead.com/forever/guide/professions/fishing/overview-leveling) gives 75 effective skill for no escapes in Darkshore, Barrens, Westfall and Loch Modan, and 150 in Ashenvale and Stonetalon. Suggested base bands of 50-75 and 100-150 are derived from those targets using Shiny Bauble (+25, usable at 1) and Nightcrawlers (+50, usable at 50). The lower end requires the named active lure; additional bonuses and stronger lures are not modeled. These are convenient options, not a global time optimum.
+- Small early crafting bands in Ranges.lua are advisory factual thresholds from the Forever [Leatherworking](https://www.wow-professions.com/forever/leatherworking-leveling-guide), [Cooking](https://www.wow-professions.com/forever/cooking-leveling-guide) and [First Aid](https://www.wow-professions.com/forever/first-aid-leveling-guide) guides. They are not color-transition tables and are not used to infer learned recipes. Heavy Linen 75-80 is explicitly a less efficient bridge. Live difficulty is authoritative for suggestions.
+- Skinning ranges 10-20 and 90-100 apply the existing Classic formula to the previously reviewed named beasts. They describe coverage requirements, not a verified Forever skill-up optimum.
+- Scrollbar uses the standard Slider/ScrollFrame APIs also present in the installed Questie AceGUI widgets. No widget code was copied. UI changes were exercised under simulated APIs; no in-game visual verification was performed.
+
 Checked 2026-10-05 against local Forever client 1.60.1.70205 (interface 16001).
 
 ## Recipe facts

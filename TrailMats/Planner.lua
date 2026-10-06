@@ -123,6 +123,7 @@ end
 
 function T.BuildPlan()
     local destination,assumed=T.Destination()
+    T.countCache={} -- One bag query per item for this build only.
     local plan={destination=destination,assumed=assumed,professions={},opportunities={},alternatives={}}
     for _,id in ipairs(T.tabOrder) do
         if T.skills[id] then
@@ -130,6 +131,8 @@ function T.BuildPlan()
             plan.opportunities[id],plan.alternatives[id]=T.ChooseOpportunity(id)
         end
     end
+    plan.future=T.BuildFuture()
+    T.countCache=nil
     return plan
 end
 
@@ -145,6 +148,7 @@ function T.Opportunities(profession)
         -- recipes or current skill-up viability from old colours or seed data.
         if r.profession==profession and r.learned and r.rank==s.rank and difficultyScore[r.difficulty] and type(r.mats)=="table" then
             local score,valid,raw= difficultyScore[r.difficulty],true,0
+            local availability=0
             local batch=math.min(T.saved.batch or 3,math.max(1,s.cap-s.rank))
             local materials={}
             for item,qty in pairs(r.mats) do
@@ -157,13 +161,13 @@ function T.Opportunities(profession)
                     if T.leather[item] and not T.skills[393] and missing>0 then valid=false end
                     if T.fish[item] and not T.skills[356] and missing>0 then valid=false end
                     if missing>0 and not localHere then valid=false end
-                    score=score+(missing==0 and 50 or 20)
+                    availability=availability+(missing==0 and 50 or 20)
                 end
                 materials[#materials+1]={item=item,have=have,need=need,missing=missing,vendor=vendor,localHere=localHere,perCraft=qty}
             end
             if valid and raw>0 then
                 table.sort(materials,function(a,b) if a.vendor~=b.vendor then return not a.vendor end return a.item<b.item end)
-                candidates[#candidates+1]={id=id,name=r.name or tostring(id),materials=materials,batch=batch,score=score-#materials*5,
+                candidates[#candidates+1]={id=id,name=r.name or tostring(id),materials=materials,batch=batch,score=score+availability/raw-#materials*5,
                     why=difficultyText[r.difficulty].."; ingredients are in your bags or have a source in this zone."}
             end
         end

@@ -41,14 +41,18 @@ end
 function T.Command(command)
     command=(command or ""):lower():match("^%s*(.-)%s*$")
     if command=="refresh" then T.ConnectDatabase();T.Refresh(true,false)
+    elseif command=="keep" then
+        T.saved.view="keep";T.saved.hidden=false;T.window:Show();T.Render()
     elseif command=="quiet" then T.saved.announce=not T.saved.announce;T.Print("Zone notices "..(T.saved.announce and "on." or "off."))
     elseif command=="tips" then T.saved.tooltips=not T.saved.tooltips;T.Print("Tooltips "..(T.saved.tooltips and "on." or "off."))
     elseif command=="auto" then T.saved.destinations={};T.saved.selected={};T.Refresh(false,false);T.Print("Default destinations restored.")
     elseif command=="status" then
-        T.Print("v0.3.0 | "..T.zoneName.." | QuestieDB "..(T.qdb and "connected" or "unavailable").." | departure advice")
+        T.Print("v0.5.0 | "..T.zoneName.." | QuestieDB "..(T.qdb and "connected" or "unavailable").." | efficiency ranges + departure advice")
         for _,id in ipairs(T.order) do local s=T.skills[id];if s then T.Print(T.professions[id].name.." "..s.rank.."/"..s.cap..(T.saved.scanned[id] and " (recipes read)" or "")) end end
     elseif command=="help" then
         T.Print("/tm opens TrailMats. Choose a profession tab. Open that profession once to find learned recipes that still give skill.")
+        T.Print("/tm keep opens Keep for later: save materials for basic recipes, even before learning them. Hover items for advice across your professions.")
+        T.Print("Drag the scrollbar or use the mouse wheel. Recommended ranges are optional; hover them for evidence.")
         T.Print("Check the Next zone button; click it to change the destination. Assumed routes are labeled.")
         T.Print("Easy opportunities are optional batches of 1, 3 or 5 crafts. Hover sources for evidence. Vendor hints show actual stock and price; buy or craft yourself only if you want to.")
         T.Print("Reference means not verified on this Forever character; Not assessed means no reviewed rule. /tm quiet toggles zone notices; /tm tips toggles tooltips.")
@@ -66,6 +70,7 @@ frame:SetScript("OnEvent",function(_,event,name)
         for _,key in ipairs({"recipes","selected","observed","scanned","destinations"}) do
             if type(T.saved[key])~="table" then T.saved[key]={} end
         end
+        if T.saved.view~="overview" and T.saved.view~="keep" then T.saved.view="keep" end
         if T.saved.announce==nil then T.saved.announce=true end
         if T.saved.tooltips==nil then T.saved.tooltips=true end
         if T.saved.batch~=1 and T.saved.batch~=3 and T.saved.batch~=5 then T.saved.batch=3 end
@@ -81,7 +86,7 @@ frame:SetScript("OnEvent",function(_,event,name)
     elseif event=="LOOT_READY" or event=="LOOT_OPENED" then
         if T.saved then T.ObserveLoot();T.Queue(false,false) end
     else
-        local scan=event=="TRADE_SKILL_SHOW" or event=="TRADE_SKILL_UPDATE" or event=="NEW_RECIPE_LEARNED"
+        local scan=event=="TRADE_SKILL_SHOW" or event=="TRADE_SKILL_UPDATE" or event=="NEW_RECIPE_LEARNED" or event=="SKILL_LINES_CHANGED"
         local zone=event=="ZONE_CHANGED_NEW_AREA" or event=="PLAYER_ENTERING_WORLD" or event=="ZONE_CHANGED"
         T.Queue(scan,zone)
     end
