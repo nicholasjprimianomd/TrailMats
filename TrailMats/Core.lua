@@ -49,7 +49,7 @@ function T.Command(command)
     elseif command=="tips" then T.saved.tooltips=not T.saved.tooltips;T.Print("Tooltips "..(T.saved.tooltips and "on." or "off."))
     elseif command=="auto" then T.saved.destinations={};T.saved.selected={};T.Refresh(false,false);T.Print("Default destinations restored.")
     elseif command=="status" then
-        T.Print("v0.7.0 | "..T.zoneName.." | QuestieDB "..(T.qdb and "connected" or "unavailable"))
+        T.Print("v0.10.0 | "..T.zoneName.." | QuestieDB "..(T.qdb and "connected" or "unavailable"))
         for _,id in ipairs(T.order) do local s=T.skills[id];if s then T.Print(T.professions[id].name.." "..s.rank.."/"..s.cap..(T.saved.scanned[id] and " (recipes read)" or "")) end end
     else
         T.saved.hidden=T.window:IsShown()
@@ -69,7 +69,6 @@ frame:SetScript("OnEvent",function(_,event,name)
         if T.saved.view~="overview" and T.saved.view~="keep" and T.saved.view~="leveling" and T.saved.view~="help" then T.saved.view="overview" end
         if T.saved.announce==nil then T.saved.announce=true end
         if T.saved.tooltips==nil then T.saved.tooltips=true end
-        if T.saved.batch~=1 and T.saved.batch~=3 and T.saved.batch~=5 then T.saved.batch=3 end
         T.ConnectDatabase();T.ReadSkills();T.ReadZone();T.CreateWindow();T.CreateTracker();T.InstallTooltips();T.InstallMerchantHook()
         _G.SLASH_TRAILMATS1="/tm";_G.SLASH_TRAILMATS2="/trailmats"
         SlashCmdList.TRAILMATS=T.Command
@@ -80,7 +79,7 @@ frame:SetScript("OnEvent",function(_,event,name)
     elseif event=="MERCHANT_CLOSED" then
         T.merchantOpen=false;T.merchantStock={};T.MarkMerchant();T.Queue(false,false)
     elseif event=="LOOT_READY" or event=="LOOT_OPENED" then
-        if T.saved then T.ObserveLoot();T.Queue(false,false) end
+        if T.saved then T.Queue(false,false) end
     else
         local scan=event=="TRADE_SKILL_SHOW" or event=="TRADE_SKILL_UPDATE" or event=="NEW_RECIPE_LEARNED" or event=="SKILL_LINES_CHANGED"
         local zone=event=="ZONE_CHANGED_NEW_AREA" or event=="PLAYER_ENTERING_WORLD" or event=="ZONE_CHANGED"

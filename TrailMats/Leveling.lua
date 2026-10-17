@@ -21,7 +21,8 @@ function T.LevelingRecipe(reference)
     local r=copy(reference)
     r.mats=copy(live and live.mats or reference.mats)
     r.learned=live~=nil
-    r.gray=live and live.rank==T.skills[r.profession].rank and live.difficulty=="trivial"
+    r.gray=live and type(live.rank)=="number" and live.rank<=T.skills[r.profession].rank and
+        (live.difficulty=="trivial" or live.difficulty=="easy")
     if r.output and live and live.outputItem==r.output[1] and type(live.outputCount)=="number" and live.outputCount>0 then
         r.output={live.outputItem,live.outputCount}
     end

@@ -49,15 +49,14 @@ function T.CreateWindow()
     end)
     f.title=label(f.drag,"GameFontNormalLarge",350);f.title:SetPoint("TOPLEFT",18,-14);f.title:SetText("TrailMats")
     f.close=button(f,"Close",55,function() T.saved.hidden=true;f:Hide() end);f.close:SetPoint("TOPRIGHT",-14,-10)
-    f.zone=label(f,"GameFontHighlight",204);f.zone:SetPoint("TOPLEFT",18,-43)
-    f.destination=button(f,"Next zone",264,function() T.ChangeDestination() end);f.destination:SetPoint("TOPRIGHT",-18,-36)
+    f.zone=label(f,"GameFontHighlight",484);f.zone:SetPoint("TOPLEFT",18,-43)
     f.tabs={}
     for _,id in ipairs(T.tabOrder) do
         local prof=id
         f.tabs[id]=button(f,T.professions[id].name,tabWidths[id],function() T.SelectProfession(prof) end)
     end
-    f.overview=button(f,"Now",74,function() T.saved.view="overview";T.Render() end)
-    f.keep=button(f,"Keep",74,function() T.saved.view="keep";T.Render() end)
+    f.overview=button(f,"Next step",94,function() T.saved.view="overview";T.Render() end)
+    f.keep=button(f,"Materials",94,function() T.saved.view="keep";T.Render() end)
     f.leveling=button(f,"Plan",74,function() T.saved.view="leveling";T.Render() end)
     f.skill=label(f,"GameFontHighlight",484)
     f.progress=CreateFrame("StatusBar",nil,f);f.progress:SetSize(484,6)
@@ -82,12 +81,11 @@ function T.CreateWindow()
     f.rows={}
     f.help=button(f,"Help",74,function() T.Command("help") end)
     f.refresh=button(f,"Refresh",74,function() T.Command("refresh") end);f.refresh:SetPoint("BOTTOMLEFT",18,35)
-    f.batch=button(f,"Batch: 3",84,function() T.CycleBatch() end);f.batch:SetPoint("LEFT",f.refresh,"RIGHT",6,0)
     f.prices=button(f,"Prices",84,function() f.planPage=f.planPage=="prices" and "materials" or "prices";T.Render() end);f.prices:SetPoint("LEFT",f.refresh,"RIGHT",6,0)
-    f.track=button(f,"Track",74,function() T.ToggleTracker() end);f.track:SetPoint("LEFT",f.batch,"RIGHT",6,0)
+    f.track=button(f,"Track",74,function() T.ToggleTracker() end);f.track:SetPoint("LEFT",f.refresh,"RIGHT",6,0)
     f.scrollHint=label(f,"GameFontDisableSmall",200);f.scrollHint:SetPoint("BOTTOMRIGHT",-18,40);f.scrollHint:SetJustifyH("RIGHT")
     f.footer=label(f,"GameFontDisableSmall",484);f.footer:SetPoint("BOTTOMLEFT",18,12)
-    f.footer:SetText("Hover for details  |  * Guide source")
+    f.footer:SetText("Hover for the recipe and source  |  Counts are estimates")
     f:SetScript("OnShow",function() T.Render() end)
     if T.saved.hidden then f:Hide() end
 end
@@ -137,13 +135,11 @@ function T.Render()
     local scroll=f.positions[f.activeKey] or 0
     f.activeProfession=selected
     f.zone:SetText(T.zoneName)
-    f.destination:SetText("Next: "..T.destinationNames[T.plan.destination]..(T.plan.assumed and " (auto)" or ""))
-    f.batch:SetText("Batch: "..(T.saved.batch or 3))
-    f.batch:SetShown(not leveling and not help and (keep or (selected and T.professions[selected].craft) or false))
+    f.track:ClearAllPoints();f.track:SetPoint("LEFT",leveling and selected and T.professions[selected].craft and f.prices or f.refresh,"RIGHT",6,0)
     f.prices:SetShown(leveling and selected and T.professions[selected].craft or false)
     f.prices:SetText(f.planPage=="prices" and "Materials" or "Prices")
     f.track:SetShown(not help and selected~=nil)
-    f.track:SetText(T.saved.trackProfession==selected and "Untrack" or "Track")
+    f.track:SetText(T.saved.trackProfession==selected and "Unpin" or "Pin")
     local x,y=0,72
     for _,id in ipairs(T.tabOrder) do
         local b=f.tabs[id]
@@ -221,56 +217,43 @@ function T.Render()
     if help then T.RenderHelp(row)
     elseif not d then row("Learn a profession, then Refresh.")
     elseif leveling then T.RenderLeveling(selected,row,f.planPage or "materials")
-    elseif keep then
-        local profession=T.FutureProfession(selected)
-        local future=T.plan.future and T.plan.future.byProfession[profession] or {}
-        heading("Keep for "..T.professions[profession].name,"Keep enough for one batch. Other uses may exist; this is not a sell list.")
-        if not T.skills[profession] then row("Learn "..T.professions[profession].name.." first.")
-        elseif #future==0 then row("Nothing to set aside yet.","No held materials match the supported recipes at your skill. Unlisted items may still be useful.")
-        else
-            for _,use in ipairs(future) do
-                local detail=use;local c,m=use.recipe,use.material
-                row(T.ItemName(use.item).."\n"..muted..c.name.."  "..c.low.."-"..c.high.."|r",
-                    function()
-                        local text=T.FutureText(detail).."\n"..T.FutureDetail(detail)
-                        for i=2,math.min(#detail.uses,4) do local r=detail.uses[i].recipe;text=text.."\nAlso: "..r.name.." ("..r.low.."-"..r.high.."). "..r.recipeStatus.."." end
-                        return text
-                    end,nil,nil,{item=use.item,value="Keep "..math.min(m.have,m.need).."\nof "..m.have})
-            end
-        end
+    elseif keep then T.RenderMaterials(selected,row)
     else
         local action=T.NextAction(selected)
         local op=T.plan.opportunities[selected]
-        local change=op and #T.plan.alternatives[selected]>1 and function() T.CycleRecipe(selected) end or nil
-        row(gold..action.text.."|r",(action.detail or "")..(op and ("\nBatch: "..op.batch.." crafts. Skill-ups are not guaranteed.\n"..op.why) or ""),"Change",change,{heading=true})
-        if op then
-            for _,m in ipairs(op.materials) do
-                local mat=m
-                row(T.ItemName(m.item).."\n"..muted..T.MaterialSource(m).."|r",
-                    function() return mat.perCraft.." per craft. "..T.SourceText(mat.item,3).."\nNeed "..mat.need.."; bags "..mat.have.."; missing "..mat.missing.."." end,
-                    nil,nil,{item=m.item,value=m.have.." / "..m.need.."\n"..(m.missing==0 and green.."Ready|r" or "Need "..m.missing)})
+        row(gold..action.text.."|r",(action.detail or "")..(op and ("\n"..op.why) or ""),nil,nil,{heading=true})
+        local goal=T.FarmGoal(selected)
+        if goal then
+            heading("For "..goal.recipe.." - skill "..goal.target,
+                "Estimated ingredients for the next step. Open your profession to check the recipe. Plan shows the full route.")
+            if op then row("Stop at skill "..op.stop.." or when the recipe turns green.",T.TargetText(op)) end
+            local groups={{name="Collect next",kind="raw"},{name="Buy supplies",kind="vendor"},{name="Craft these first",kind="prepare"},{name="In your bags",kind="ready"}}
+            for _,group in ipairs(groups) do
+                local shown=false
+                for _,m in ipairs(goal.materials) do
+                    local kind=m.missing==0 and ((m.fromCrafts or 0)>0 and "prepare" or "ready") or (m.vendor or m.supply) and "vendor" or "raw"
+                    if kind==group.kind and (m.need or 0)>0 then
+                        if not shown then heading(group.name);shown=true end
+                        local action,detail,source=T.MaterialAdvice(m,T.professions[goal.profession].name.." to skill "..goal.target,goal.recipe,goal.steps)
+                        row(T.ItemName(m.item).."\n"..muted..source.."|r",detail,nil,nil,
+                            {item=m.item,value=action.."\nHave "..m.have})
+                    end
+                end
             end
             local offers=T.CurrentMerchantSuggestions()
-            if #offers>0 then heading("At this vendor") end
+            if #offers>0 then heading("Available at this vendor") end
             for _,v in ipairs(offers) do
-                row(T.ItemName(v.item),T.MerchantText(v),nil,nil,{item=v.item,value=v.amount.." for\n"..T.Money(v.cost)})
+                row(T.ItemName(v.item),T.MerchantText(v),nil,nil,{item=v.item,value="Buy "..v.amount.."\n"..T.Money(v.cost)})
             end
-        end
-        local needs=T.ZoneNeeds(selected)
-        if #needs.here>0 then
-            heading("This zone (est.)", "Missing materials for "..T.professions[needs.profession].name.." "..needs.target..". Totals are estimates; follow the recipe order in Plan.")
-            for i=1,math.min(3,#needs.here) do
-                local m=needs.here[i]
-                row(T.ItemName(m.item).."\n"..muted..m.source.."|r",m.detail.."\nFor skill "..needs.target.." (estimated).",nil,nil,{item=m.item,value="Need "..m.missing})
-            end
-            if #needs.here>3 then row((#needs.here-3).." more materials",nil,"Plan",function() T.saved.view="leveling";f.planPage="materials";T.Render() end) end
         elseif not T.professions[selected].craft then
-            row(selected==356 and "Keep your catch for Cooking." or "Keep leather for Leatherworking.","No missing materials with a recorded local source for the current plan.")
+            row(selected==356 and "Learn Cooking to use your catch." or "Learn Leatherworking to use your leather.",
+                "A paired crafting profession gives this tab an ingredient target.")
         end
-        local state=d.state=="ready" and "Skill OK *" or d.state=="not_yet" and "Low base skill *" or "Not checked"
-        local advice=T.RangeAdvice(selected,T.plan.destination)
-        row("Next zone: "..state,d.reason.."\n"..d.action.."\n"..d.evidence..
-            (advice and ("\n\n"..advice.title.."\n"..advice.text.."\n"..(advice.note or "").."\n"..(advice.detail or "")) or ""))
+        if selected==356 and T.fishingEfficiency[T.area] then
+            local advice=T.RangeAdvice(356,T.area)
+            row("Fishing target here: "..T.fishingEfficiency[T.area].target.." including bonuses",
+                advice.text.."\n"..(advice.note or "").."\n"..(advice.detail or ""))
+        end
     end
     f.content:SetHeight(math.max(1,height));T.SyncScroll(scroll)
 end
@@ -284,7 +267,7 @@ function T.AddNPCTooltip(tooltip,unit)
         local source=T.GetSources(2318).npcs[npc]
         if source then
             tooltip:AddLine("TrailMats / Skinning: check this beast for useful leather.",1,0.82,0.5,true)
-            tooltip:AddLine(source.evidence..". The corpse's actual Skinning requirement takes priority.",0.7,0.7,0.7,true)
+            tooltip:AddLine("Database source. The corpse's actual Skinning requirement takes priority.",0.7,0.7,0.7,true)
             added=true
         end
     end
@@ -292,7 +275,7 @@ function T.AddNPCTooltip(tooltip,unit)
         local source=T.GetSources(m.item).npcs[npc]
         if m.missing>0 and source then
             tooltip:AddLine("TrailMats: collect "..m.missing.." "..T.ItemName(m.item).." for "..T.CurrentOpportunity().name,1,0.82,0.5,true)
-            tooltip:AddLine(source.evidence..". Kills vary; no reliable kill estimate.",0.7,0.7,0.7,true);added=true
+            tooltip:AddLine("Database source. Kills vary; no reliable kill estimate.",0.7,0.7,0.7,true);added=true
         end
     end
     if added then tooltip:Show() end
@@ -306,7 +289,7 @@ function T.AddItemTooltip(tooltip)
     local added=T.AddKeepTooltip(tooltip,item)
     for _,m in ipairs(T.CurrentMaterials()) do
         if m.item==item then
-            tooltip:AddLine("TrailMats current batch: "..m.missing.." more for "..T.CurrentOpportunity().batch.." crafts of "..T.CurrentOpportunity().name,1,0.82,0.5,true)
+            tooltip:AddLine("TrailMats next recipe: "..m.missing.." more for "..T.CurrentOpportunity().batch.." crafts of "..T.CurrentOpportunity().name,1,0.82,0.5,true)
             for _,v in ipairs(T.CurrentMerchantSuggestions()) do if v.item==item then tooltip:AddLine(T.MerchantText(v),0.8,0.9,0.8,true) end end
             added=true;break
         end

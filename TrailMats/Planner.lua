@@ -140,8 +140,8 @@ function T.BuildPlan()
     return plan
 end
 
-local difficultyScore={optimal=40,medium=30,easy=5}
-local difficultyText={optimal="Orange recipe",medium="Yellow recipe",easy="Green recipe"}
+local difficultyScore={optimal=40,medium=30}
+local difficultyText={optimal="Orange recipe",medium="Yellow recipe"}
 
 function T.Opportunities(profession)
     local s=T.skills[profession]
@@ -151,14 +151,15 @@ function T.Opportunities(profession)
         -- A fresh scan at the current skill is required. Never infer learned
         -- recipes or current skill-up viability from old colours or seed data.
         if r.profession==profession and r.learned and r.rank==s.rank and difficultyScore[r.difficulty] and type(r.mats)=="table" then
-            local score,valid,raw= difficultyScore[r.difficulty],true,0
+            local target=T.AutomaticTarget(profession,r.name,s.rank,s.cap)
+            local score,valid,raw= difficultyScore[r.difficulty],target~=nil,0
             local availability=0
-            local batch=math.min(T.saved.batch or 3,math.max(1,s.cap-s.rank))
+            local batch=target and target.crafts or 0
             local materials={}
             for item,qty in pairs(r.mats) do
-                if type(item)~="number" or type(qty)~="number" or qty<=0 then valid=false;break end
+                if type(item)~="number" or type(qty)~="number" or qty<=0 or qty~=qty or qty==math.huge then valid=false;break end
                 local have=T.Count(item);local need=qty*batch;local missing=math.max(0,need-have)
-                local vendor=not not T.vendor[item]
+                local vendor=not not T.levelingSupplies[item]
                 local localHere=not vendor and T.HasLocalSource(item) or false
                 if not vendor then
                     raw=raw+1
@@ -171,7 +172,7 @@ function T.Opportunities(profession)
             end
             if valid and raw>0 then
                 table.sort(materials,function(a,b) if a.vendor~=b.vendor then return not a.vendor end return a.item<b.item end)
-                candidates[#candidates+1]={id=id,name=r.name or tostring(id),materials=materials,batch=batch,score=score+availability/raw-#materials*5,
+                candidates[#candidates+1]={id=id,name=r.name or tostring(id),materials=materials,batch=batch,stop=target.stop,score=score+availability/raw-#materials*5,
                     why=difficultyText[r.difficulty].."; ingredients are in your bags or have a source in this zone."}
             end
         end
@@ -182,20 +183,7 @@ end
 function T.ChooseOpportunity(profession)
     local candidates=T.Opportunities(profession)
     local chosen=candidates[1]
-    for _,r in ipairs(candidates) do if r.id==T.saved.selected[profession] then chosen=r end end
     return chosen,candidates
-end
-function T.CycleRecipe(profession)
-    local chosen,candidates=T.ChooseOpportunity(profession)
-    if #candidates<2 then return end
-    local index=1
-    for i,r in ipairs(candidates) do if chosen and chosen.id==r.id then index=i end end
-    T.saved.selected[profession]=candidates[index % #candidates+1].id
-    T.Refresh(false,false)
-end
-function T.CycleBatch()
-    local nextBatch={[1]=3,[3]=5,[5]=1}
-    T.saved.batch=nextBatch[T.saved.batch] or 3;T.Refresh(false,false)
 end
 function T.ReadMerchant()
     T.merchantStock={}

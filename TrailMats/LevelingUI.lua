@@ -33,7 +33,7 @@ function T.RenderLeveling(id,row,page)
     if not p then row("Open your profession, then Refresh.");return end
     local f=T.window
     local function switch(page) f.planPage=page;T.Render() end
-    row(gold..p.start.." to "..p.target.." (est.)|r",
+    row(gold..T.professions[id].name..": "..p.start.." to "..p.target.." (est.)|r",
         "Materials and craft counts are estimates. Stop each recipe at its target skill. Bags and skill changes update the list; skill-ups are not guaranteed.",
         not p.gathering and not p.complete and not p.unsupported and not p.blocked and (page=="recipes" and "Materials" or "Recipes") or nil,
         not p.gathering and not p.complete and not p.unsupported and not p.blocked and function() switch(page=="recipes" and "materials" or "recipes") end or nil)
@@ -42,20 +42,20 @@ function T.RenderLeveling(id,row,page)
         row(id==356 and "Fish while you quest." or "Skin beasts while you quest.")
         local companion=id==356 and 185 or 165
         row("Materials: "..T.professions[companion].name,
-            "Gathering needs no crafting shopping list. This zone and Track show materials for your paired crafting profession, if learned.",
+            "Gathering needs no crafting shopping list. Next step and the tracker show materials for your paired crafting profession, if learned.",
             T.skills[companion] and "Open" or nil,T.skills[companion] and function() T.SelectProfession(companion);switch("materials") end or nil)
         if p.training then row("Train the next rank first.") end
         return
     end
     if p.unsupported then row("Routes currently stop at 225.","A complete route to 300 has not been verified for this beta.");return end
-    if p.blocked then row("Open your profession, then Refresh.","The guide route conflicts with your latest recipe colors. Use Now for available recipes.");return end
+    if p.blocked then row("Open your profession, then Refresh.","The guide route conflicts with your latest recipe colors. Use Next step for available recipes.");return end
     local c=p.chosen
     if p.training then row(gold.."Train the next rank first.|r","Your trained cap is below this plan's target. Check character level and training requirements.") end
     local cost=c.unknown==0 and ("Est. cost: "..T.Money(c.cost)) or "Cost: add prices"
     local comparison=p.allPriced and "Lowest priced route" or p.pricedCount>0 and "Some routes need prices" or "Uses what you have"
-    row(cost.."\n"..muted..comparison.."|r",
+    if page=="prices" then row(cost.."\n"..muted..comparison.."|r",
         p.pricedCount.." of "..p.candidateCount.." reviewed routes fully priced. Compares additional material spending using bags, your quotes and current vendor packs. Unknown prices are never free.\n"..
-        "Only supported recipe combinations are compared. Gathering time, resale value, training, recipe books and the value of owned materials are excluded. Without complete prices, routes favor materials already held. Quotes may need updating.")
+        "Only supported recipe combinations are compared. Gathering time, resale value, training, recipe books and the value of owned materials are excluded. Without complete prices, routes favor materials already held. Quotes may need updating.") end
     if page=="prices" then
         row(gold.."Prices per item|r","Your quote overrides the open vendor. Blank clears it. Prices do not confirm auction stock; update old quotes when the market changes.")
         for _,item in ipairs(p.priceItems) do
@@ -91,34 +91,87 @@ function T.RenderLeveling(id,row,page)
         return
     end
     row(gold..(f.showAllMats and "All materials" or "Still needed").."|r",
-        "Missing amounts subtract bags and outputs from earlier planned crafts. Hover a material for the breakdown. Bank, mail and other characters are excluded.",
+        "Collect the listed materials and buy the vendor supplies. Hover to see which recipe needs each item. Bank, mail and other characters are not counted.",
         f.showAllMats and "Missing only" or "Show all",function() f.showAllMats=not f.showAllMats;T.Render() end)
     local shown=0
     for _,m in ipairs(c.materials) do
         if m.need>0 and (f.showAllMats or m.missing>0) then
             shown=shown+1
-            local source,detail
-            if m.supply then source="Vendor supply"
-            elseif m.missing==0 then source=m.fromCrafts>0 and "Bags + planned crafts" or "In bags"
-            else source,detail=T.ZoneSource(m.item);source=source or "No local source recorded" end
-            row(T.ItemName(m.item).."\n"..muted..source.."|r",
-                "Total needed: "..m.need.."\nIn bags: "..m.have.." (used: "..m.fromBags..")\nMade along the way: "..m.fromCrafts..
-                "\nStill needed: "..m.missing.."\n"..m.priceSource..(m.cost and (": "..T.Money(m.cost)) or "")..(detail and ("\n"..detail) or ""),
-                nil,nil,{item=m.item,value=m.missing>0 and ("Need "..m.missing) or "Covered"})
+            local action,detail,source=T.MaterialAdvice(m,T.professions[id].name.." to skill "..p.target,nil,c.steps)
+            row(T.ItemName(m.item).."\n"..muted..source.."|r",detail,
+                nil,nil,{item=m.item,value=action.."\nHave "..m.have})
         end
     end
-    if shown==0 then row("Materials covered.","Bags and earlier planned crafts cover this route. Check Recipes for the order and any recipes you still need to learn.") end
+    if shown==0 then row("Materials covered.","You have the supplies for this route. Check Recipes for anything you must make first or still need to learn.") end
+end
+
+function T.RenderMaterials(selected,row)
+    local id=T.FutureProfession(selected)
+    local skill=T.skills[id]
+    local function heading(text,detail) row(gold..text.."|r",detail,nil,nil,{heading=true}) end
+    if not skill then row("Learn "..T.professions[id].name.." to get a material plan.");return end
+    local goal=T.FarmGoal(id)
+    if not goal then
+        if skill.rank>=T.levelingLimit then row("Reviewed material plans stop at skill "..T.levelingLimit..".")
+        else row("No reviewed efficient recipe at your current skill.","Open your profession to refresh recipes. The database cannot supply a verified leveling target for this gap.") end
+        return
+    end
+    heading(T.professions[id].name.." to skill "..goal.target.." (est.)",
+        "Materials for the next efficient recipe, including ingredients you do not own yet. Counts adjust with your bags and skill.")
+    if skill.rank>=skill.cap then row("Train "..T.professions[id].name.." before continuing.") end
+    row("Make "..goal.recipe,"Open your profession to check or learn this recipe before crafting.")
+    local groups={{key="here",name="Collect in "..T.zoneName},{key="away",name="No source listed in this zone"},
+        {key="vendor",name="Buy supplies"},{key="prepare",name="Craft first"},{key="ready",name="In your bags"}}
+    local entries,current={},{}
+    local missingRaw,localRaw=0,0
+    for _,m in ipairs(goal.materials) do
+        if m.need>0 then
+            current[m.item]=true
+            local action,detail,source=T.MaterialAdvice(m,T.professions[id].name.." to skill "..goal.target,goal.recipe,goal.steps)
+            local key
+            if m.missing==0 then key=(m.fromCrafts or 0)>0 and "prepare" or "ready"
+            elseif m.supply or m.vendor then key="vendor"
+            else
+                missingRaw=missingRaw+1
+                if T.ZoneSource(m.item) then key="here";localRaw=localRaw+1 else key="away" end
+            end
+            entries[#entries+1]={key=key,item=m.item,action=action,detail=detail,source=source,have=m.have}
+        end
+    end
+    if missingRaw>0 and localRaw==0 then
+        row(T.NoLocalSource().." for the missing materials.","No match in the available data does not prove the material cannot drop here.")
+    end
+    for _,g in ipairs(groups) do
+        local shown=false
+        for _,e in ipairs(entries) do
+            if e.key==g.key then
+                if not shown then heading(g.key=="away" and not T.qdb and not T.dropDB and "Source database unavailable" or g.name);shown=true end
+                row(T.ItemName(e.item).."\n"..muted..e.source.."|r",e.detail,nil,nil,
+                    {item=e.item,value=e.action.."\nHave "..e.have})
+            end
+        end
+    end
+    local shown=false
+    for _,use in ipairs(T.plan.future and T.plan.future.byProfession[id] or {}) do
+        if not current[use.item] then
+            if not shown then heading("Save for later recipes");shown=true end
+            local detail=use
+            row(T.ItemName(use.item).."\n"..muted..use.recipe.name.."|r",
+                function() return T.FutureText(detail).."\n"..T.FutureDetail(detail) end,nil,nil,
+                {item=use.item,value="Keep up to "..use.material.need.."\nHave "..use.material.have})
+        end
+    end
 end
 
 function T.RenderHelp(row)
     row(gold.."Using TrailMats|r",nil,nil,nil,{heading=true})
-    row("Now: your next craft and local materials.","Open your profession first. Suggestions need a learned, non-grey recipe scanned at your current skill. Reopen it after gaining skill; clear restrictive recipe filters if needed.")
-    row("Keep: what to save from your bags.","The reserve covers one optional batch, not the whole milestone. Uses of the same material are alternatives, not totals. Unlisted items may still be useful.")
+    row("Next step: what to collect, buy and craft.","Open your profession first. The checklist focuses on one recipe at a time. Quantities are automatic. Suggestions need a learned orange/yellow recipe with a reviewed target, scanned at your current skill. Stop at the displayed skill or when it turns green. Reopen it after gaining skill; clear restrictive recipe filters if needed.")
+    row("Materials: what to collect here and save for later.","The list includes materials you do not own yet and database sources in your current zone. Keep limits follow each material through its useful leveling ranges, including later recipes and ingredient preparation. Limits shrink as skill rises. Different materials may be alternatives; you do not need to collect every limit. Unlisted items may still be useful.")
     row("Plan: materials to 75, 150 or 225.","Recipes shows the crafting order and how to obtain each recipe. Counts are estimates; stop at each step's skill target. Training and recipe books may cost extra. Routes to 300 are not yet complete.")
-    row("Track: a small list while you quest.","Tracks one profession until you untrack it. Drag the tracker to move it. Open returns to Now. It follows your bags and current zone, including while the main window is closed.")
+    row("Pin: keep a small list on screen.","Pins one profession until you unpin it. Drag the tracker to move it. Open returns to Next step. It follows your bags and current zone, including while the main window is closed.")
     row("Prices: compare material costs.","Enter copper per item. Your quotes and the open vendor are used to compare supported routes. Missing prices are unknown. No automatic Auction House scan. Bags lower purchases; farming time, resale value and training costs are excluded.")
-    row("* Guide source: check in-game.","Sources may use Classic data. Coordinates identify a reference spawn, not your nearest live target. No kill count or guaranteed drop is inferred. Next-zone advice is optional and is not a character-level requirement.")
+    row("Sources come from the database.","QuestieDB and profession references supply locations without waiting for personal loot. Some records retain Classic references. No listed source means the data has no match here, not proof of absence.")
     row("All counts use bags only.","Bank, mail and other characters are excluded. Fishing and Skinning share material goals with Cooking and Leatherworking when those professions are learned. Nothing is bought or crafted automatically.")
     row("Commands", "/tm: open or close\n/tm now, /tm keep, /tm mats: change view\n/tm track: toggle tracker for selected profession\n/tm refresh: update recipes and sources\n/tm quiet: zone notices\n/tm tips: item and creature tooltips\n/tm auto: reset destination and recipe choices\n/tm status: version and database status")
-    row("Version 0.7.0", "WoW Forever. Supported professions: Leatherworking, Cooking, First Aid, Skinning and Fishing. Guide coverage and live recipe availability can differ during the beta.")
+    row("Version 0.10.0", "WoW Forever. Supported professions: Leatherworking, Cooking, First Aid, Skinning and Fishing. Guide coverage and live recipe availability can differ during the beta.")
 end

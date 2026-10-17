@@ -1,44 +1,64 @@
-# TrailMats 0.7.0
+# TrailMats 0.10.0
 
 What to craft, gather and keep while leveling in WoW Forever.
 
 ## Install
 
-Download [TrailMats-0.7.0.zip](https://github.com/nicholasjprimianomd/TrailMats/releases/tag/v0.7.0). Extract the `TrailMats` folder into `Interface/AddOns`, restart WoW, then type `/tm`. Keep Questie and QuestieDB installed separately for source references. Existing character settings are preserved.
+Use the packaged `TrailMats-0.10.0.zip`. Extract the `TrailMats` folder into `Interface/AddOns`, restart WoW, then type `/tm`. Keep Questie and QuestieDB installed separately for source references. Existing character settings are preserved.
 
 Only the inner `TrailMats` folder belongs in AddOns. TrailMats never buys or crafts automatically.
 
 ## A shorter interface
 
-Choose a profession, then one of three views:
+Choose the profession you want to level. **Next step** shows what to farm for one recipe; **Plan** is the optional longer shopping list.
 
 | View | What it shows |
 | --- | --- |
-| **Now** | Your next action, batch ingredients and materials to gather in this zone. |
-| **Keep** | Useful items in your bags and how much to set aside for one batch. |
+| **Next step** | One recipe at a time: Collect, Buy, Craft first, or Ready, with a named source and skill target. |
+| **Materials** | What to collect for the next recipe, including empty-bag ingredients, named sources in your current zone, and held materials to save for later. |
 | **Plan** | Missing materials to the next 75, 150 or 225 skill milestone. **Show all** includes covered ingredients. |
 
 **Recipes** inside Plan shows the crafting order and recipe availability. **Prices** lets you compare material costs. Hover rows for source locations, ingredient breakdowns and explanations. **Help** keeps the longer guidance off the main screens.
 
-The main window uses one row of profession tabs, item icons with names, and separate quantity columns. `*` marks a guide source or guide-based advice; confirm it in-game. Unlisted materials may still be useful.
+The main window uses one row of profession tabs, item icons with names, and separate quantity columns. Counts are estimates. Unlisted materials may still be useful.
 
 ## While questing
 
-- Open your profession's crafting window to read learned recipes. **Now** only suggests learned, non-grey recipes scanned at your current skill. Reopen the crafting window after gaining skill if asked to refresh.
-- **Craft N** means your bags cover that many crafts, up to the selected **Batch: 1 / 3 / 5**. Otherwise the next action directs you to supplies, gathering or training.
-- **This zone (est.)** shows missing materials for the milestone plan that have a source recorded in your current zone. Counts update with your bags and skill. Source names and coordinates are references, not live nearby targets or guaranteed drops.
-- Click **Track** for a small, movable list that stays visible while the main window is closed. It remains pinned to that profession when you switch tabs. **Open** returns to its Now view; **Hide** removes the tracker.
+- Open your profession's crafting window to read learned recipes. **Next step** only suggests learned orange/yellow recipes with reviewed targets scanned at your current skill. Reopen the crafting window after gaining skill if asked to refresh.
+- **Craft N** means your bags cover that many crafts, up to the automatic estimate for the next recipe switch or trained skill cap. Otherwise the next action directs you to supplies, gathering or training.
+- The tracker and **Next step** use the same current recipe target. Before a live recipe is available, the first step of the researched plan supplies a preview, including intermediate ingredients. The tracker lists missing ingredients with a recorded source in the current zone. Counts update with your bags and skill. Source names are database references, not live nearby targets or guaranteed drops.
+- Click **Pin** for a small, movable list that stays visible while the main window is closed. It remains pinned to that profession when you switch tabs. **Open** returns to its Next step view; **Hide** removes the tracker.
 - Fishing follows Cooking's material plan; Skinning follows Leatherworking's, when the paired profession is learned. Gathering itself has no invented crafting quota.
-- At a vendor, relevant supplies for the current batch receive a short **TrailMats** quantity label. Hover for actual pack price and stock. Raw materials are not suggested for purchase.
-- The next-zone button changes your destination. `(auto)` identifies an assumed route. Hover the next-zone advice for requirements, optional skill ranges and source details.
+- At a vendor, relevant supplies for the automatic recipe target receive a short **TrailMats** quantity label. Hover for actual pack price and stock. Raw materials are not suggested for purchase.
+- Farming sources come from the installed database and reviewed fishing/skinning references, without waiting for personal loot. No raw coordinates or nearest-location claims are shown. The old next-zone selector is removed. Fishing keeps a current-zone skill target.
+
+## Materials in your current zone
+
+**Materials** replaces Keep. It shows the next recipe and estimated skill target, then separates ingredients into **Collect in [zone]**, **No source listed in this zone**, **Buy supplies**, **Craft first**, and **In your bags**. Each ingredient shows how much more to collect and how much you have. Sources are named creatures, fishing waters, or local faction-compatible vendors where listed.
+
+For example, First Aid 72/150 with no cloth shows Heavy Linen Bandage to skill 80 and an estimated 32 more Linen Cloth. In Darkshore, the installed database lists Blackwood creatures. The amount falls as cloth enters your bags and as your skill increases. Stop at the target or when the recipe turns green; counts are not guaranteed skill-ups.
+
+If no missing ingredient has a listed local source, the page says so. **Source database unavailable** is a separate state. Missing data is not proof that nothing in the zone drops the item. QuestieDB supplies item, creature, object and vendor records; its installed flavor-specific drop table fills gaps even before Questie's separate consumer has initialized. Personal observations are neither required nor used to rank sources. Old saved observations are preserved.
+
+At your trained cap, the page asks you to train before continuing. Plans beyond reviewed coverage show a coverage message instead of an empty list.
+
+## Automatic keep limits
+
+**Keep up to 130 / Have 10** means reserve your 10 held units; roughly 130 can still contribute to the supported leveling route. It is not an instruction to gather 120 immediately. The **Save for later recipes** section keeps this advice for held items outside the current recipe. Hover for the useful skill ranges, recipes and quantities behind the total.
+
+The estimate reuses the reviewed counts already in the milestone planner, scales them to remaining skill, and rounds up. For example, at First Aid 20, Linen Cloth includes the remaining Linen Bandage crafts plus later Heavy Linen Bandages through skill 80. The limit falls as skill rises. Live green/gray recipe observations retire inefficient leveling uses, including after a further skill increase.
+
+Successive uses of one material are added; recipes competing for the same skill interval are not added together. Different materials, such as two types of fish, can be alternatives for the same points. Their keep limits are independent upper estimates, so you do not need every limit. Keep preserves inputs for later intermediate crafts, credits their expected production once, and uses owned intermediates to reduce additional preparation.
+
+Future advice can include recipes you have not learned and later training ranks. It does not grant recipes or promise skill-ups. Unreviewed targets stay unknown; coverage stops at 225. Nothing is marked safe to sell merely because it is absent. The existing batch and manual-recipe settings are ignored, and character settings otherwise remain intact.
 
 ## Plans and prices
 
 Plans cover Leatherworking, Cooking and First Aid through **225**. The next target follows current skill, not the trained cap. At a cap, the plan previews the next milestone and prompts training. Complete routes to 300 are not yet supported.
 
-Materials include vendor supplies and intermediate recipes. **Need** is the amount still missing after allocating bags and outputs from earlier planned crafts. **Covered** can include those planned crafts; it does not mean every ingredient is already in your bags. Hover to see total use, bag allocation and planned production. Recipes are listed in crafting order, including preparation of missing intermediates.
+Materials include vendor supplies and intermediate recipes. **Collect** or **Buy** is the amount still missing after allocating bags and outputs from earlier planned crafts. **Ready** means the necessary units are in your bags. **Craft first** means an earlier recipe must produce the ingredient. Hover to see how many more to collect or buy and which recipe needs them. If a recipe must make an ingredient first, the row says **Craft first**. Recipes are listed in crafting order, including preparation of missing intermediates.
 
-Counts are guide-based estimates. Stop a recipe when its target skill is reached; skill-ups are not guaranteed. Check recipe availability before following a plan. The batch control affects Now and Keep, not the milestone plan.
+Counts are guide-based estimates. Stop a recipe when its target skill is reached; skill-ups are not guaranteed. Check recipe availability before following a plan. There is no batch or recipe-cycle control. Next step selects a suitable learned recipe automatically. Stop at the displayed skill or when it turns green, whichever comes first.
 
 Under **Prices**, click **Edit** and enter copper per item (100 copper = 1 silver). Blank clears a quote; zero explicitly means free. Quotes are saved per character and dated in the tooltip. There is no automatic Auction House scan. Open-vendor prices supply missing quotes for basic supplies, respecting packs and available stock.
 
@@ -50,7 +70,7 @@ It does not compare every possible recipe, within-band mixture, or buying versus
 
 Supported professions: Leatherworking, Skinning, Fishing, Cooking and First Aid. Counts use bags only, excluding banks, mail and other characters. English recipe names support reference matching.
 
-Local source coverage depends on Questie/QuestieDB and a small set of fish and skinning references. Classic-derived records remain marked. An observed drop confirms that source only in the zone where it was recorded. There are no inferred kill counts. Early departure guidance is most complete for Teldrassil to Darkshore; unknown routes remain unknown. Profession advice is not a character-level or combat-safety check.
+Local source coverage depends on Questie/QuestieDB and a small set of fish and skinning references. Some provider records retain Classic-derived data, as explained in Help. Database sources do not depend on this character having seen them. There are no inferred kill counts. Early departure guidance is most complete for Teldrassil to Darkshore; unknown routes remain unknown. Profession advice is not a character-level or combat-safety check.
 
 The compact tracker and hover-first layout take inspiration from [Questie](https://www.curseforge.com/wow/addons/questie) and [Profession Shopping List](https://www.curseforge.com/wow/addons/profession-shopping-list). Their code and artwork are not bundled.
 
@@ -58,7 +78,7 @@ The compact tracker and hover-first layout take inspiration from [Questie](https
 
 `/tm` opens or closes the window. `/tm now`, `/tm keep`, `/tm mats` and `/tm help` open a view. `/tm track` toggles the selected profession's tracker.
 
-`/tm refresh` updates recipes and sources; `/tm quiet` toggles zone notices; `/tm tips` toggles item and creature hints; `/tm auto` resets destination and recipe choices; `/tm status` shows the version and database connection.
+`/tm refresh` updates recipes and sources; `/tm quiet` toggles zone notices; `/tm tips` toggles item and creature hints; `/tm auto` restores automatic destinations; `/tm status` shows the version and database connection.
 
 Drag the title bar to move the main window. Use the wheel or scrollbar for long lists; each view remembers its scroll position for the session.
 
@@ -70,16 +90,20 @@ Run from the repository root with Lua 5.1:
 luac5.1 -p TrailMats/*.lua
 lua5.1 tests/test.lua .
 lua5.1 tests/leveling.lua .
+lua5.1 tests/automatic.lua .
+lua5.1 tests/flow.lua .
+lua5.1 tests/sources.lua .
 ```
 
-The simulated game tests cover navigation, price editing, tracker updates while the main window is closed, profession and zone changes, source confidence, caps, recipe freshness, material counts, vendor packs and stock. The planner checks every starting skill from 1 through 224 for all three crafting professions, including ingredient accounting, intermediate production and incomplete prices.
+The simulated game tests cover navigation, price editing, tracker updates while the main window is closed, profession and zone changes, empty-bag checklists, database fallback, local vendors, caps, recipe freshness, material counts, vendor packs and stock. The planner checks every starting skill from 1 through 224 for all three crafting professions, including ingredient accounting, intermediate production and incomplete prices.
 
-Optional integration checks use separately installed Questie/QuestieDB and Python with `cbor2`:
+Optional integration checks use separately installed Questie/QuestieDB and Python with `cbor2` (and `lupa` for the Materials check):
 
 ```sh
 python tests/real_database.py "/path/to/World of Warcraft/_classic_beta_/Interface/AddOns"
+python tests/materials_database.py "/path/to/World of Warcraft/_classic_beta_/Interface/AddOns"
 ```
 
-Automated checks pass for 0.7.0. In-game appearance and interaction still need a live visual check.
+Automated checks pass for 0.10.0. In-game appearance and interaction still need a live visual check.
 
 Version 0.5.0 was imported from the updated Drive bundle on October 6, 2026. Original 0.3.0 source is retained in Git history; the 0.4.0 and 0.5.0 changes arrived together.

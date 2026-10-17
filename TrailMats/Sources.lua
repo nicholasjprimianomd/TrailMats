@@ -8,7 +8,7 @@ local function read(entity, field, id)
 end
 
 function T.ConnectDatabase()
-    T.qdb=nil;T.dropDB=nil;T.zoneDB=nil
+    T.qdb=nil;T.dropDB=nil;T.zoneDB=nil;T.databaseDrops=nil
     local lib=_G.LibQuestieDB
     if lib and lib.RequireContract then
         local ok,compatible=pcall(lib.RequireContract,2)
@@ -23,13 +23,33 @@ function T.ConnectDatabase()
     T.sourceCache={}
 end
 
+-- Prefer Questie's decoded table. If its consumer has not initialized, read
+-- the installed QuestieDB flavor's own support table once, without a copied DB.
+function T.DatabaseDrops()
+    if T.databaseDrops then return T.databaseDrops end
+    local support=T.qdb and T.qdb.Support
+    local data=read(support,"Get","QuestieClassicItemDrops")
+    local encoded=data and data.wowheadData
+    if type(encoded)=="table" then T.databaseDrops=encoded
+    elseif type(encoded)=="string" and loadstring then
+        local fn=loadstring(encoded,"TrailMats installed drop data")
+        if fn then
+            if setfenv then setfenv(fn,{}) end
+            local ok,decoded=pcall(fn)
+            if ok and type(decoded)=="table" then T.databaseDrops=decoded end
+        end
+    end
+    return T.databaseDrops or {}
+end
+
 function T.GetSources(item)
     if T.sourceCache[item] then return T.sourceCache[item] end
     local result={npcs={},objects={},areas={}}
     local lib=T.qdb
     local function addNPC(id, evidence, areaOverride)
         if type(id)~="number" or id<=0 then return end
-        local name=read(lib and lib.Npc,"name",id) or ("Creature #"..id)
+        local name=read(lib and lib.Npc,"name",id)
+        if not name then return end
         local record={id=id,name=name,evidence=evidence}
         result.npcs[id]=record
         local spawns=read(lib and lib.Npc,"spawns",id)
@@ -37,15 +57,7 @@ function T.GetSources(item)
             for area,positions in pairs(spawns) do
                 result.areas[area]=result.areas[area] or {}
                 local first=type(positions)=="table" and positions[1]
-                if type(first)=="table" and type(first[1])=="number" and type(first[2])=="number" and lib.EraToForever then
-                    local ok,x,y=pcall(lib.EraToForever,area,first[1],first[2])
-                    if ok then first={x,y} end
-                end
-                local localEvidence=evidence
-                if evidence=="Observed on this character" and area~=areaOverride then
-                    localEvidence="Source observed elsewhere; location unverified"
-                end
-                result.areas[area][#result.areas[area]+1]={name=name,id=id,evidence=localEvidence,position=first}
+                result.areas[area][#result.areas[area]+1]={name=name,id=id,evidence=evidence,position=first}
             end
         end
         if areaOverride and not (spawns and spawns[areaOverride]) then
@@ -65,10 +77,11 @@ function T.GetSources(item)
         local npcs=read(lib and lib.Item,"npcDrops",item)
         for _,id in ipairs(type(npcs)=="table" and npcs or {}) do addNPC(id,"Questie reference; Forever unverified") end
         -- Questie's already decoded Classic table fills gaps such as Linen Cloth.
-        -- Never execute source strings or load another copy of its large database.
-        local drops=T.dropDB and T.dropDB.tableWowhead and T.dropDB.tableWowhead[item]
+        -- Reuse the decoded consumer when present; otherwise use the provider fallback.
+        local drops=(T.dropDB and T.dropDB.tableCorrections and T.dropDB.tableCorrections[item]) or
+            (T.dropDB and T.dropDB.tableWowhead and T.dropDB.tableWowhead[item]) or T.DatabaseDrops()[item]
         for id,chance in pairs(type(drops)=="table" and drops or {}) do
-            if type(chance)=="number" and chance>=1 and not result.npcs[id] then addNPC(id,"Classic drop reference") end
+            if type(chance)=="number" and chance>0 and not result.npcs[id] then addNPC(id,"Classic drop reference") end
         end
         local objects=read(lib and lib.Item,"objectDrops",item)
         for _,id in ipairs(type(objects)=="table" and objects or {}) do
@@ -82,9 +95,6 @@ function T.GetSources(item)
                 end
             end
         end
-    end
-    for id,observation in pairs((T.saved and T.saved.observed[item]) or {}) do
-        addNPC(id,"Observed on this character",observation.area)
     end
     for _,list in pairs(result.areas) do
         table.sort(list,function(a,b) return a.name<b.name end)
@@ -107,40 +117,34 @@ function T.SourceText(item, limit)
     local parts={}
     for i=1,math.min(limit or 3,#list) do
         local r=list[i]
-        local position=r.position
-        local suffix=""
-        if type(position)=="table" and type(position[1])=="number" and type(position[2])=="number" then
-            suffix=string.format(" (%.0f, %.0f)",position[1],position[2])
-        end
-        parts[#parts+1]=r.name..suffix
+        parts[#parts+1]=r.name
     end
     local evidence=list[1].evidence
     return table.concat(parts,", ").." - "..evidence.."."
 end
 
+function T.VendorSource(item)
+    local lib=T.qdb
+    local ids=read(lib and lib.Item,"vendors",item)
+    local faction=T.Safe(UnitFactionGroup,"player")
+    local letter=faction=="Alliance" and "A" or faction=="Horde" and "H"
+    local names,seen={},{}
+    for _,id in ipairs(type(ids)=="table" and ids or {}) do
+        local spawns=read(lib and lib.Npc,"spawns",id)
+        local friendly=read(lib and lib.Npc,"friendlyToFaction",id)
+        local allowed=friendly=="AH" or letter and friendly and friendly:find(letter,1,true)
+        if allowed and spawns and spawns[T.area] then
+            local name=read(lib and lib.Npc,"name",id)
+            if name and not seen[name] then names[#names+1]=name;seen[name]=true end
+        end
+    end
+    table.sort(names)
+    if #names==0 then return nil end
+    local shown={};for i=1,math.min(3,#names) do shown[i]=names[i] end
+    return table.concat(shown,", ")
+end
+
 function T.NPCFromGUID(guid)
     if type(guid)~="string" or not guid:match("^Creature%-") then return nil end
     return tonumber(guid:match("^Creature%-%d+%-%d+%-%d+%-%d+%-(%d+)%-"))
-end
-
-function T.ObserveLoot()
-    if not GetNumLootItems or not GetLootSourceInfo or not GetLootSlotLink then return end
-    for slot=1,GetNumLootItems() do
-        local link=GetLootSlotLink(slot)
-        local item=link and tonumber(link:match("item:(%d+)"))
-        if item and T.items[item] then
-            local sources={GetLootSourceInfo(slot)}
-            local unique,count=nil,0
-            for i=1,#sources,2 do
-                local id=T.NPCFromGUID(sources[i])
-                if id and id~=unique then unique=id;count=count+1 end
-            end
-            -- Mixed area-loot cannot safely be attributed to one NPC.
-            if count==1 then
-                T.saved.observed[item]=T.saved.observed[item] or {}
-                T.saved.observed[item][unique]={area=T.area}
-                T.sourceCache[item]=nil
-            end
-        end
-    end
 end

@@ -65,7 +65,7 @@ local currentMap=1438
 C_Map={GetBestMapForUnit=function() return currentMap end,GetMapInfo=function() return {parentMapID=1439} end}
 GetRealZoneText=function() return "Test zone" end
 local itemNpcs={[6889]={1995},[5465]={1986}}
-local npcNames={[1995]="Strigid Owl",[1986]="Webwood Spider",[2069]="Moonstalker",[2002]="Rascal"}
+local npcNames={[1995]="Strigid Owl",[1986]="Webwood Spider",[2069]="Moonstalker",[2002]="Rascal",[2032]="Mangy Nightsaber"}
 local npcSpawns={[1995]={[141]={{50,50}}},[1986]={[141]={{40,40}}},[2069]={[148]={{43,40}}},[2002]={[148]={{48,38}}}}
 LibQuestieDB={RequireContract=function(v) return v==2 end,
     Item={npcDrops=function(id) return itemNpcs[id] end,objectDrops=function() return {} end},
@@ -137,10 +137,10 @@ GetTradeSkillReagentInfo=function(_,j) return j==1 and "Light Leather" or "Coars
 GetTradeSkillReagentItemLink=function(_,j) return "|Hitem:"..(j==1 and 2318 or 2320).."|h[Reagent]|h" end
 T.SelectProfession(165);event("TRADE_SKILL_SHOW")
 local op=T.CurrentOpportunity()
-check(op and op.batch==3,"fresh learned recipe offers optional three crafts")
-check(op.materials[1].need==6 and op.materials[1].missing==1,"live ingredients times batch minus bags")
-check(op.materials[2].missing==3,"vendor supply tied to exact recipe")
-check(screen():find("Get supplies for Light Armor Kit",1,true) and screen():find("Need 3",1,true),"short action uses raw materials already held and shows missing supplies")
+check(op and op.batch==12 and op.stop==30,"automatic estimate reaches recipe switch at 30")
+check(op.materials[1].need==24 and op.materials[1].missing==19,"live ingredients times automatic estimate minus bags")
+check(op.materials[2].missing==12,"vendor supply tied to exact recipe")
+check(screen():find("Get supplies for Light Armor Kit",1,true) and screen():find("Buy 12 more",1,true),"short action uses raw materials already held and shows missing supplies")
 check(not screen():find("~",1,true) and not screen():find("[\128-\255]"),"no tilde or unsupported glyphs")
 IsTradeSkillLinked=function() return true end
 GetTradeSkillReagentInfo=function() return "wrong",nil,999 end
@@ -154,12 +154,12 @@ T.saved.recipes[2152].difficulty="trivial";T.Refresh(false,false)
 check(not T.CurrentOpportunity(),"grey recipes are not suggested")
 T.saved.recipes[2152].difficulty="optimal";T.Refresh(false,false)
 -- Actual merchant stock uses Forever's nine-return API, not the old seven-return form.
-merchant={{id=2320,name="Coarse Thread",price=20,pack=2,stock=-1},{id=2318,name="Light Leather",price=1,pack=1,stock=-1}}
+merchant={{id=2320,name="Coarse Thread",price=20,pack=5,stock=-1},{id=2318,name="Light Leather",price=1,pack=1,stock=-1}}
 event("MERCHANT_SHOW")
 local offers=T.CurrentMerchantSuggestions()
 check(#offers==1,"basic supplies only; no farmed material purchases")
-check(offers[1].amount==4 and offers[1].cost==40,"pack rounding and total copper cost")
-check(offers[1].missing==3 and offers[1].batch==3,"merchant reason explains quantity")
+check(offers[1].amount==15 and offers[1].cost==60,"pack rounding and total copper cost")
+check(offers[1].missing==12 and offers[1].batch==12,"merchant reason explains quantity")
 check(T.merchantMarks[1]:IsShown(),"relevant merchant button is marked")
 check(T.MerchantText(offers[1]):find("pack size",1,true),"extra pack units explained")
 merchant[3]={id=2320,name="Coarse Thread bulk",price=100,pack=100,stock=-1}
@@ -168,10 +168,10 @@ check(T.CurrentMerchantSuggestions()[1].index==1,"prefer lower total cost over m
 merchant[3]=nil
 merchant[1].extended=true;event("MERCHANT_UPDATE");check(#T.CurrentMerchantSuggestions()==0,"alternate currency excluded")
 merchant[1].extended=false;merchant[1].purchasable=false;event("MERCHANT_UPDATE");check(#T.CurrentMerchantSuggestions()==0,"unavailable purchase excluded")
-merchant[1].purchasable=true;merchant[1].stock=2;event("MERCHANT_UPDATE");offers=T.CurrentMerchantSuggestions()
-check(offers[1].amount==2 and offers[1].remaining==1,"limited stock respected")
+merchant[1].purchasable=true;merchant[1].stock=5;event("MERCHANT_UPDATE");offers=T.CurrentMerchantSuggestions()
+check(offers[1].amount==5 and offers[1].remaining==7,"limited stock respected")
 merchant[1].stock=-1
-inventory[2320]=3;event("BAG_UPDATE_DELAYED")
+inventory[2320]=12;event("BAG_UPDATE_DELAYED")
 check(#T.CurrentMerchantSuggestions()==0,"owned supplies remove recommendation")
 check(not T.merchantMarks[1]:IsShown(),"stale merchant mark cleared")
 inventory[2320]=0;event("BAG_UPDATE_DELAYED")
@@ -183,13 +183,12 @@ MerchantFrame.selectedTab=1
 T.window.tabs[129].scripts.OnClick();check(#T.CurrentMerchantSuggestions()==0,"merchant hints follow selected profession")
 T.SelectProfession(165);event("MERCHANT_CLOSED")
 check(#T.CurrentMerchantSuggestions()==0 and not T.merchantMarks[1]:IsShown(),"merchant close clears stock and marks")
--- Recipe alternatives, optional batch sizes, and zone source limits.
+-- Unsupported recipes do not get invented targets; old manual choices are ignored.
 T.saved.recipes[999]={profession=165,name="Test alternative",learned=true,rank=20,difficulty="medium",mats={[2318]=1}}
-T.Refresh(false,false);local original=T.CurrentOpportunity().id
-T.CycleRecipe(165);check(T.CurrentOpportunity().id~=original,"alternative button changes only suggestion")
-T.CycleBatch();check(T.CurrentOpportunity().batch==5,"batch is user controlled")
-T.CycleBatch();check(T.CurrentOpportunity().batch==1,"single-craft option")
-T.CycleBatch();check(T.CurrentOpportunity().batch==3,"batch cycle restored")
+T.saved.selected[165]=999;T.saved.batch=5;T.Refresh(false,false)
+check(T.CurrentOpportunity().id==2152 and T.CurrentOpportunity().batch==12,"automatic selection ignores retired settings")
+check(T.window.batch==nil and T.CycleBatch==nil,"batch control removed")
+check(T.CycleRecipe==nil,"manual recipe cycle removed")
 currentMap=1440;inventory[2318]=0;event("ZONE_CHANGED_NEW_AREA")
 check(T.area==331,"non-seed map resolves via Questie")
 check(not T.CurrentOpportunity(),"no suggestion when missing raw ingredients have no local reference")
@@ -204,7 +203,7 @@ T.ChangeDestination();check(T.plan.destination==406,"destination selector change
 -- NPC tooltips are scoped to one profession and report materials, not fake kills.
 currentMap=1439;inventory[2318]=0;T.saved.selected[165]=2152;T.Refresh(false,false);T.SelectProfession(165)
 GameTooltip.lines={};GameTooltip.trailMatsNPC=nil;T.AddNPCTooltip(GameTooltip,"mouseover")
-check(table.concat(GameTooltip.lines," "):find("collect 6 Light Leather",1,true),"NPC shows remaining material for selected recipe")
+check(table.concat(GameTooltip.lines," "):find("collect 24 Light Leather",1,true),"NPC shows remaining material for selected recipe")
 check(table.concat(GameTooltip.lines," "):find("Kills vary",1,true),"no invented drop-rate kill estimate")
 local n=#GameTooltip.lines;T.AddNPCTooltip(GameTooltip,"mouseover");check(#GameTooltip.lines==n,"duplicate tooltip guard")
 T.SelectProfession(393);GameTooltip.lines={};T.AddNPCTooltip(GameTooltip,"mouseover")
@@ -228,7 +227,7 @@ local future=T.plan.future
 check(future.byItem[6308][1].recipe.name=="Bristle Whisker Catfish","unlearned fish recipe has a future use")
 check(not future.byItem[6308][1].recipe.learned,"reference recipe is not marked learned")
 check(future.byItem[6308][1].recipe.trainRank,"future recipe beyond trained cap prompts training")
-check(future.byItem[6308][1].material.need==3,"future reserve respects selected batch")
+check(future.byItem[6308][1].material.need==55,"future reserve covers catfish through 150")
 check(future.byItem[6308][1].material.have==2,"future reserve reads current bags")
 check(not future.byItem[4289],"vendor salt is not a raw material reserve")
 check(not T.plan.opportunities[185],"future fish recipe cannot become a live crafting suggestion")
@@ -238,11 +237,11 @@ check(table.concat(GameTooltip.lines," "):find("Bristle Whisker Catfish",1,true)
 local lineCount=#GameTooltip.lines;T.AddItemTooltip(GameTooltip)
 check(#GameTooltip.lines==lineCount,"future item hints are not duplicated")
 T.Command("keep");check(T.saved.view=="keep" and T.window:IsShown(),"keep command opens future view")
-T.CycleBatch();check(T.plan.future.byItem[6308][1].material.need==5,"batch changes update future reserves")
+T.saved.batch=1;T.Refresh(false,false);check(T.plan.future.byItem[6308][1].material.need==55,"old batch cannot alter reserves")
 T.saved.recipes[9999]={profession=185,name="Bristle Whisker Catfish",learned=true,rank=20,difficulty="trivial",mats={[6308]=1}}
 T.Refresh(false,false);check(not T.plan.future.byItem[6308],"fresh grey learned recipe overrides future reference")
 T.saved.recipes[9999].difficulty="optimal";T.saved.recipes[9999].mats[6308]=2
-T.Refresh(false,false);check(T.plan.future.byItem[6308][1].material.need==10,"recorded recipe quantities override reference")
+T.Refresh(false,false);check(T.plan.future.byItem[6308][1].material.need==110,"recorded recipe quantities override reference")
 -- Milestone view and price editor operate through the actual addon entrypoints.
 T.saved.recipes={};ranks[129]=20;T.Refresh(false,false);T.SelectProfession(129)
 T.window.leveling.scripts.OnClick()
@@ -257,7 +256,7 @@ end
 clickRow("Recipes")
 check(screen():find("Craft in order",1,true) and screen():find("Check recipe",1,true),"recipe page preserves order and availability")
 clickRow("Materials")
-check(not T.window.batch:IsShown() and T.window.prices:IsShown(),"milestone quantities do not inherit optional batch size")
+check(T.window.batch==nil and T.window.prices:IsShown(),"milestone quantities do not inherit optional batch size")
 T.ScrollBy(100000);check(T.window.scroll:GetVerticalScroll()==math.max(0,T.window.content:GetHeight()-T.window.scroll:GetHeight()),"long milestone list stays inside scroll bounds")
 T.window.prices.scripts.OnClick()
 check(screen():find("Peacebloom",1,true) and screen():find("Empty Vial",1,true),"price list includes alternatives, not just selected recipe")
@@ -298,17 +297,18 @@ check(T.NextAction(165).text=="Gather for Light Armor Kit","missing first craft 
 local needs=T.ZoneNeeds(165)
 local leather
 for _,m in ipairs(needs.here) do if m.item==2318 then leather=m end;check(not T.levelingSupplies[m.item],"local list excludes vendor supplies") end
-check(leather and leather.missing>3 and needs.target==75,"local list uses full milestone needs, not batch")
+check(leather and leather.missing>3 and needs.target==30,"tracker and Now share the automatic recipe target")
 check(#needs.vendor>0,"vendor needs stay separate")
 check(#T.ZoneNeeds(393).here==#needs.here,"Skinning follows Leatherworking material goals")
-check(screen():find("This zone (est.)",1,true),"forecast remains visibly estimated")
+check(not screen():find("This zone (est.)",1,true),"Now avoids a duplicate material list")
 local source,detail=T.ZoneSource(2318)
-check(source:find("*",1,true) and detail:find("candidate",1,true),"reference source remains marked")
+check(source:find("Moonstalker",1,true) and detail:find("Database sources",1,true),"reference source does not require personal loot")
+local databaseSource=source
 T.saved.observed[2318]={[2069]={area=148}};T.sourceCache[2318]=nil
 source,detail=T.ZoneSource(2318)
-check(source=="Moonstalker" and detail:find("Near 43, 40",1,true),"observed local source preferred; coordinates move to hover")
+check(source==databaseSource and not detail:find("You have looted",1,true) and not detail:find("43, 40",1,true),"personal loot cannot change source recommendations")
 npcSpawns[2069][331]={{20,20}};T.sourceCache[2318]=nil
-check(T.ZoneSource(2318,331):find("*",1,true),"an observation does not verify another zone")
+check(T.ZoneSource(2318,331):find("Moonstalker",1,true),"database spawns work in zones without observations")
 npcSpawns[2069][331]=nil;T.sourceCache[2318]=nil
 T.window.track.scripts.OnClick()
 check(T.tracker:IsShown() and T.saved.trackProfession==165,"Track pins selected profession")
@@ -316,11 +316,11 @@ check(T.tracker.lines[1].text~="" and T.tracker.zone.text:find("est.",1,true),"t
 T.SelectProfession(129)
 check(T.saved.trackProfession==165 and T.tracker.title.text:find("Leatherworking",1,true),"tab change cannot silently repin tracker")
 T.window.close.scripts.OnClick()
-inventory[2318]=5;inventory[2320]=3;event("BAG_UPDATE_DELAYED")
+inventory[2318]=5;inventory[2320]=12;event("BAG_UPDATE_DELAYED")
 check(not T.window:IsShown() and T.tracker.action.text=="Craft 2 x Light Armor Kit","bag change updates ready crafts while window closed")
 check(T.NextAction(165).text=="Craft 2 x Light Armor Kit","ready count is limited by actual materials")
 inventory[2318]=1000;event("BAG_UPDATE_DELAYED")
-check(T.NextAction(165).text=="Craft 3 x Light Armor Kit","ready action never exceeds chosen batch")
+check(T.NextAction(165).text=="Craft 12 x Light Armor Kit","ready action stops at automatic target")
 for _,m in ipairs(T.ZoneNeeds(165).here) do check(m.item~=2318,"covered material leaves the zone checklist") end
 inventory[2318]=0;event("BAG_UPDATE_DELAYED")
 C_Map.GetMapInfo=function() return {parentMapID=0} end
@@ -352,7 +352,7 @@ check(not screen():find("Bags allocated",1,true) and not screen():find("guarante
 inventory[2318]=1000;T.Refresh(false,false)
 check(not screen():find("Light Leather",1,true),"covered material hidden in missing-only view")
 clickRow("Show all")
-check(screen():find("Light Leather",1,true) and screen():find("Covered",1,true),"Show all restores covered route ingredients")
+check(screen():find("Light Leather",1,true) and screen():find("Ready",1,true),"Show all restores covered route ingredients")
 clickRow("Missing only");clickRow("Recipes")
 local hasAcquisition=false
 for _,r in ipairs(T.window.rows) do
@@ -360,8 +360,38 @@ for _,r in ipairs(T.window.rows) do
 end
 check(hasAcquisition,"recipe acquisition is preserved in hover details")
 clickRow("Materials")
+-- Actual rendered item tooltips must stay focused on decisions.
+for _,view in ipairs({"overview","leveling","keep"}) do
+    T.saved.view=view;T.window.planPage="materials";T.Render()
+    for _,r in ipairs(T.window.rows) do
+        if r:IsShown() then
+            local text=type(r.detail)=="function" and r.detail() or r.detail or ""
+            for _,phrase in ipairs({"used:","Made along the way", "Total needed:", "Price needed", "Near "}) do
+                check(not text:find(phrase,1,true),"rendered tooltip hides "..phrase)
+            end
+        end
+    end
+end
+check(T.window.destination==nil,"next-zone control removed from farming flow")
+check(T.window.overview.text=="Next step","main view names its purpose")
 local chatBefore=#messages;T.Command("help")
 check(T.saved.view=="help" and #messages==chatBefore and screen():find("Using TrailMats",1,true),"Help is a page, not chat spam")
 T.saved.view="keep";event("ADDON_LOADED","TrailMats")
 check(T.saved.view=="keep","existing view choice survives upgrade")
+-- Screenshot regression: an empty bag must still produce a useful local list.
+GetProfessionInfo=function(index) local id=slots[index];return names[id],nil,ranks[id],150,nil,nil,id end
+ranks[129]=72;inventory[2589]=0;T.saved.recipes={};T.saved.observed={};currentMap=1439
+T.qdb={Item={npcDrops=function(id) return id==2589 and {2002} or {} end},
+    Npc={name=function(id) return npcNames[id] end,spawns=function(id) return npcSpawns[id] end}}
+T.sourceCache={}
+T.Refresh(false,false);T.SelectProfession(129);T.Command("keep")
+check(T.window.keep.text=="Materials","existing Keep view becomes Materials")
+check(screen():find("Heavy Linen Bandage",1,true) and screen():find("to skill 80",1,true),"empty bags show efficient recipe and target")
+check(screen():find("Linen Cloth",1,true) and screen():find("Collect 32 more",1,true) and screen():find("Rascal",1,true),"empty bags show missing amount and database source")
+inventory[2589]=10;event("BAG_UPDATE_DELAYED")
+check(screen():find("Collect 22 more",1,true),"Materials updates remaining quantity after looting")
+currentMap=9999;event("ZONE_CHANGED_NEW_AREA")
+check(screen():find("No listed source",1,true) and not screen():find("Rascal",1,true),"zone without source clears old targets and explains absence")
+T.qdb=nil;T.dropDB=nil;T.sourceCache={};T.Render()
+check(screen():find("Source database unavailable",1,true),"missing provider is not presented as proof of no source")
 print("PASS: "..checks.." assertions covering UI navigation, tracker updates, source evidence, recipes, bags, vendor stock and tooltips")
