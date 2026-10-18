@@ -1,20 +1,27 @@
 local _, T = ...
 
 -- Keep action text short. Evidence stays attached to the row's tooltip.
+-- Uses the same source strength as the map pin (Sources.lua tiers): a zone whose only sources are
+-- fallbacks (chests, rare or unlikely drops) defers to a better source elsewhere, and a world drop
+-- has no local target. The third return says whether a click can pin it.
 function T.ZoneSource(item,area)
     area=area or T.area
     local water=T.water[area] and T.water[area][item]
-    if water then return "Fish: "..water,"Fishing location from the profession reference." end
-    local list=T.GetSources(item).areas[area]
-    if not list or not list[1] then return nil end
+    if water then return "Fish: "..water,"Fishing location from the profession reference.",false end
+    local sources=T.GetSources(item)
+    local list=sources.areas[area]
+    if not list or not list[1] or sources.worldDrop then return nil end
+    local best=4
+    for _,source in ipairs(list) do if source.kind~="node" then best=math.min(best,source.tier or 2) end end
+    if best==4 or best==3 and (sources.bestTier or 3)<3 then return nil end
     local names,seen={},{}
     for _,source in ipairs(list) do
-        if not seen[source.name] then names[#names+1]=source.name;seen[source.name]=true end
+        if source.kind~="node" and (source.tier or 2)==best and not seen[source.name] then names[#names+1]=source.name;seen[source.name]=true end
         if #names==3 then break end
     end
     local namesText=table.concat(names,", ")
     return (T.leather[item] and "Skin: " or "From: ")..namesText,
-        "Database sources in this zone: "..namesText.."."
+        "Database sources in this zone: "..namesText..".",true
 end
 
 function T.NoLocalSource()
@@ -55,16 +62,20 @@ function T.MaterialAdvice(m,goal,recipe,steps)
     end
     local source
     if m.missing>0 then
-        if supply then
-            local vendor=T.VendorSource(m.item)
-            source=vendor and ("Buy from: "..vendor) or "Vendor location not listed here"
-            text=text.."\n"..(vendor and ("Vendor in "..T.zoneName..": "..vendor..".") or ("No vendor listed in "..T.zoneName.."; check a profession supply vendor."))
-        else
-            local detail
-            source,detail=T.ZoneSource(m.item)
-            if detail then text=text.."\n"..detail
-            else source=T.NoLocalSource();text=text.."\n"..source.."." end
+        local detail
+        -- Herbs, ore, stone, gems and bars: the nearest node you can gather, or the skill it needs.
+        local gather=not supply and T.GatherSource and T.GatherSource(m.item)
+        if gather then source,detail=gather.label,gather.detail
+        elseif supply then
+            local here=T.VendorSource and T.VendorSource(m.item)
+            if here then source="Buy from: "..here;detail="Vendor in "..T.zoneName..": "..here.."." end
+        else source,detail=T.ZoneSource(m.item) end
+        if not source then
+            -- Nothing in this zone: name the nearest database source elsewhere instead of "none here".
+            local found=T.FindSource and T.FindSource(m.item) or {label=T.NoLocalSource(),detail=T.NoLocalSource().."."}
+            source,detail=found.label,found.detail
         end
+        text=text.."\n"..detail
     else source=(m.fromCrafts or 0)>0 and "Make with earlier recipe" or "Already in your bags" end
     return action,text,source
 end
@@ -100,7 +111,11 @@ function T.ZoneNeeds(id)
         if m.missing>0 then
             local location,detail
             local supply=m.supply or m.vendor
-            if not supply then location,detail=T.ZoneSource(m.item) end
+            -- Herbs, ore, stone and bars come from nodes or smelting: local when a node you can gather is here.
+            local gather=not supply and T.GatherSource and T.GatherSource(m.item)
+            if gather then
+                if gather.spot and gather.spot.area==T.area then location,detail=gather.label,gather.detail end
+            elseif not supply then location,detail=T.ZoneSource(m.item) end
             local entry={item=m.item,missing=m.missing,have=m.have,need=m.need,source=location,detail=detail}
             local list=supply and result.vendor or location and result.here or result.elsewhere
             list[#list+1]=entry
@@ -161,19 +176,29 @@ function T.RenderTracker()
     local action=T.NextAction(id)
     f.action:SetText(action.text)
     local needs=T.ZoneNeeds(id)
+    -- Local materials first, then the rest with their zone (or no zone for gather and fishing hints).
+    local lines={}
+    for _,m in ipairs(needs.here) do lines[#lines+1]={m=m,source=m.source} end
+    for _,m in ipairs(needs.elsewhere) do
+        local found=T.FindSource and T.FindSource(m.item) or {label=T.NoLocalSource()}
+        local away=found.spot and found.spot.area~=T.area
+        lines[#lines+1]={m=m,zone=away and T.AreaName(found.spot.area) or nil,source=found.label}
+    end
     local top=32+math.max(18,f.action:GetStringHeight() or 18)+6
     for index,line in ipairs(f.lines) do
-        local m=needs.here[index]
+        local e=lines[index]
         line:ClearAllPoints();line:SetPoint("TOPLEFT",10,-top)
-        line:SetText(m and ("Collect "..m.missing.." "..T.ItemName(m.item)) or "")
-        if m then top=top+math.max(18,line:GetStringHeight() or 18) end
+        line:SetText(e and ("Collect "..e.m.missing.." "..T.ItemName(e.m.item)..(e.zone and (" ("..e.zone..")") or "")) or "")
+        if e then top=top+math.max(18,line:GetStringHeight() or 18) end
+        local b=f.lineButtons and f.lineButtons[index]
+        if b then b.item=e and e.m.item or nil;b:SetShown(e~=nil) end
     end
-    f.zone:SetText(T.zoneName..(#needs.here>0 and " (est.)" or "")..(#needs.here>3 and (" +"..(#needs.here-3)) or ""))
+    f.zone:SetText(T.zoneName..(#needs.here>0 and " (est.)" or "")..(#lines>3 and (" +"..(#lines-3)) or ""))
     f.detail=action.detail or ""
-    if #needs.here>0 then
+    if #lines>0 then
         f.detail=f.detail.."\nFor "..needs.recipe.." to skill "..needs.target.." (estimated):"
-        for _,m in ipairs(needs.here) do f.detail=f.detail.."\n"..m.missing.." "..T.ItemName(m.item)..": "..m.source end
+        for _,e in ipairs(lines) do f.detail=f.detail.."\n"..e.m.missing.." "..T.ItemName(e.m.item)..": "..e.source end
     end
-    f.detail=f.detail.."\nOpen shows the recipe and database sources."
+    f.detail=f.detail.."\nClick a material to mark its nearest source on your map. Open shows the recipe."
     f:SetHeight(top+math.max(26,f.zone:GetStringHeight()+14));f:Show()
 end

@@ -35,11 +35,13 @@ The main window uses one row of profession tabs, item icons with names, and sepa
 
 ## Materials in your current zone
 
-**Materials** replaces Keep. It shows the next recipe and estimated skill target, then separates ingredients into **Collect in [zone]**, **No source listed in this zone**, **Buy supplies**, **Craft first**, and **In your bags**. Each ingredient shows how much more to collect and how much you have. Sources are named creatures, fishing waters, or local faction-compatible vendors where listed.
+**Materials** replaces Keep. It shows the next recipe and estimated skill target, then separates ingredients into **Collect in [zone]**, **Found in other zones**, **Buy supplies**, **Craft first**, and **In your bags**. Each ingredient shows how much more to collect and how much you have. Sources are named creatures, fishing waters, or local faction-compatible vendors where listed.
 
 For example, First Aid 72/150 with no cloth shows Heavy Linen Bandage to skill 80 and an estimated 32 more Linen Cloth. In Darkshore, the installed database lists Blackwood creatures. The amount falls as cloth enters your bags and as your skill increases. Stop at the target or when the recipe turns green; counts are not guaranteed skill-ups.
 
-If no missing ingredient has a listed local source, the page says so. **Source database unavailable** is a separate state. Missing data is not proof that nothing in the zone drops the item. QuestieDB supplies item, creature, object and vendor records; its installed flavor-specific drop table fills gaps even before Questie's separate consumer has initialized. Personal observations are neither required nor used to rank sources. Old saved observations are preserved.
+When an ingredient has no source in your zone, TrailMats looks it up across the whole database and names the best one with its zone, for example **From: Blackwood Pathfinder, Darkshore**. Sources are ranked by how likely they are, then by distance from your position: drops of at least 2% and friendly vendors first, creatures listed without a drop chance next, and chests, crates, rare drops, rare or elite creatures and dungeons you are not in only when nothing better exists. Creatures friendly to your own faction (guards, nobles, prisoners) are never suggested. Items that hundreds of creatures can drop (ore, stone, gems) are called a world drop rather than pointing at one of them. Herbs, ore, stone and gems point a gatherer with enough skill to the nearest node (**Herb: Peacebloom, Elwynn Forest**); without the skill they show the node and the skill it needs (**Herb: Peacebloom (Herbalism 1)**), and bars show their smelt (**Smelt: Copper Ore (Mining 1)**). Leather outside the reviewed starting zones and fish say to skin beasts near your level or to fish. **Source database unavailable** appears only when Questie is not installed or enabled.
+
+**Click any material** (Next step, Materials, Plan, Save for later, or a line on the tracker) to mark its source on your map with a waypoint and the in-world arrow, open the map at that zone, and print the zone and coordinates in chat. With TomTom installed the waypoint goes to TomTom instead of a second arrow. In combat the waypoint is still placed but the map stays closed, because the game blocks add-ons from opening it then. The map opening can be turned off in Options. Hints without coordinates (herbs, ore, leather, fish, world drops) are printed instead; the row tooltip says which a click will do.
 
 At your trained cap, the page asks you to train before continuing. Plans beyond reviewed coverage show a coverage message instead of an empty list.
 
@@ -122,6 +124,7 @@ lua5.1 tests/flow.lua .
 lua5.1 tests/sources.lua .
 lua5.1 tests/professions.lua .
 lua5.1 tests/trades.lua .
+lua5.1 tests/locate.lua .
 lua5.1 tests/auction.lua .
 ```
 

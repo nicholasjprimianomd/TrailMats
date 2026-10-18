@@ -4,7 +4,7 @@ local bags={}
 T.Count=function(item) return bags[item] or 0 end
 T.Safe=function(fn,...) if type(fn)=="function" then return fn(...) end end
 UnitFactionGroup=function() return "Alliance" end
-for _,name in ipairs({"Data","Ranges","Future","LevelingData","LevelingTrades","Leveling","Automatic","Actions"}) do
+for _,name in ipairs({"Data","Ranges","Future","LevelingData","LevelingTrades","Leveling","Automatic","Actions","Locate"}) do
     assert(loadfile(root.."/TrailMats/"..name..".lua"))("TrailMats",T)
 end
 T.ItemName=function(item) return T.items[item] or tostring(item) end
@@ -34,7 +34,7 @@ check(action=="Ready" and not text:find("Foreststrider",1,true),"covered stack d
 clean(text)
 m={item=2678,have=2,need=15,missing=13,supply=true}
 action,text,source=T.MaterialAdvice(m,"Cooking to skill 50","Herb Baked Egg")
-check(action=="Buy 13 more" and source=="Vendor location not listed here","vendor supplies never presented as farm loot")
+check(action=="Buy 13 more" and source=="Source database unavailable","vendor supplies never presented as farm loot; no vendor guess without the database")
 clean(text)
 m={item=4231,have=0,need=24,missing=0,fromCrafts=24}
 local steps={{recipe=T.levelingRecipes["light-hide"]},{recipe=T.levelingRecipes.pants}}
@@ -51,7 +51,23 @@ action,text,source=T.MaterialAdvice({item=6889,have=0,missing=15},"Cooking to sk
 check(source=="Source database unavailable","missing database never invents directions")
 T.qdb={}
 action,text,source=T.MaterialAdvice({item=6889,have=0,missing=15},"Cooking to skill 50","Herb Baked Egg")
-check(source=="No listed source in Darkshore","connected database distinguishes absent records from unavailable provider")
+check(source=="Not in the source database" and text:find("containers, quests or crafting",1,true),"connected database distinguishes absent records from unavailable provider")
+-- With a source elsewhere, the row names it and its zone instead of saying there is none here.
+C_Map={GetAreaInfo=function(area) return ({[331]="Ashenvale"})[area] end}
+T.sourceCache={}
+sources={areas={[331]={{name="Ashenvale Owl",evidence="Classic drop reference",position={50,50}}}},
+    spots={{kind="drop",name="Ashenvale Owl",evidence="Classic drop reference",area=331,points={{50,50}},chance=20}}}
+action,text,source=T.MaterialAdvice({item=6889,have=0,missing=15},"Cooking to skill 50","Herb Baked Egg")
+check(source=="From: Ashenvale Owl, Ashenvale" and text:find("A database source: Ashenvale Owl in Ashenvale.",1,true) and not text:find("Click",1,true),"elsewhere source named with its zone; without a position it is not called the nearest")
+check(not text:find("No listed source",1,true) and not source:find("No ",1,true),"no 'none here' wording when the database has a source elsewhere")
+T.sourceCache={};sources={areas={}}
+action,text,source=T.MaterialAdvice({item=2678,have=0,need=5,missing=5,supply=true},"Cooking to skill 50","Herb Baked Egg")
+check(source=="Trade or profession supply vendor","supply with no vendor record points to supply vendors")
+action,text,source=T.MaterialAdvice({item=2318,have=0,missing=4},"Leatherworking to skill 30","Light Armor Kit")
+check(source=="Skin beasts near your level","leather without a skinning list says to skin beasts")
+T.area=12;T.sourceCache={}
+action,text,source=T.MaterialAdvice({item=6291,have=0,missing=4},"Cooking to skill 50","Brilliant Smallfish")
+check(source=="Fish: Teldrassil Lake Al'Ameth","fish without a local water points to a recorded water");T.area=148
 
 -- With no live recipe, farm only the next step, not the whole milestone.
 local function plan(rank,id)

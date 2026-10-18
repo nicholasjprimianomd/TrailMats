@@ -20,6 +20,7 @@ Leveling.lua
 Automatic.lua
 Planner.lua
 Sources.lua
+Locate.lua
 Client.lua
 Actions.lua
 Auction.lua

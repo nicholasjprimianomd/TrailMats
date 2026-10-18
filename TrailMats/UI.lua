@@ -103,7 +103,20 @@ end
 function T.MaterialSource(m)
     if m.vendor then return "Vendor" end
     if m.missing==0 then return "In bags" end
-    return T.ZoneSource(m.item) or "No local source"
+    return T.ZoneSource(m.item) or (T.FindSource and T.FindSource(m.item).label) or T.NoLocalSource()
+end
+-- What a click on a material does: a map pin when there is a place, otherwise the hint in chat.
+function T.ClickHint(item)
+    local found=T.FindSource and T.FindSource(item)
+    return found and found.spot and found.spot.map and "Click: mark it on your map." or "Click: show where to get it in chat."
+end
+local function locateTooltip(owner,item)
+    GameTooltip:SetOwner(owner,"ANCHOR_RIGHT")
+    GameTooltip:AddLine(T.ItemName(item),1,0.82,0.5)
+    local found=T.FindSource and T.FindSource(item)
+    if found then GameTooltip:AddLine(found.label,0.85,0.9,0.9,true) end
+    GameTooltip:AddLine(T.ClickHint(item),0.6,0.8,1,true)
+    GameTooltip:Show()
 end
 function T.CreateTracker()
     if T.tracker then return end
@@ -117,9 +130,15 @@ function T.CreateTracker()
     f:SetScript("OnDragStop",function() f:StopMovingOrSizing();T.saved.trackX,T.saved.trackY=T.Offsets(f) end)
     f.title=label(f,"GameFontNormalSmall",262);f.title:SetPoint("TOPLEFT",10,-10)
     f.action=label(f,"GameFontHighlight",320);f.action:SetPoint("TOPLEFT",10,-32)
-    f.lines={}
+    f.lines={};f.lineButtons={}
     for i=1,3 do
         f.lines[i]=label(f,"GameFontHighlightSmall",320)
+        -- A click target over each line: the tracker itself stays draggable everywhere else.
+        local b=CreateFrame("Button",nil,f);b:SetAllPoints(f.lines[i]);b:RegisterForClicks("LeftButtonUp");b:Hide()
+        b:SetScript("OnClick",function(self) if self.item then T.ShowSource(self.item) end end)
+        b:SetScript("OnEnter",function(self) if self.item then locateTooltip(self,self.item) end end)
+        b:SetScript("OnLeave",function() GameTooltip:Hide() end)
+        f.lineButtons[i]=b
     end
     f.zone=label(f,"GameFontDisableSmall",255);f.zone:SetPoint("BOTTOMLEFT",10,10)
     f.close=button(f,"Hide",50,function() T.saved.trackProfession=nil;T.RenderTracker();T.Render() end)
@@ -192,8 +211,14 @@ function T.Render()
             r:SetScript("OnEnter",function(self)
                 if not self.heading then self.background:SetColorTexture(0.18,0.26,0.28,0.7) end
                 local detail=type(self.detail)=="function" and self.detail() or self.detail
-                if detail then GameTooltip:SetOwner(self,"ANCHOR_RIGHT");GameTooltip:AddLine(detail,0.85,0.9,0.9,true);GameTooltip:Show() end
+                if detail or self.locate then
+                    GameTooltip:SetOwner(self,"ANCHOR_RIGHT")
+                    if detail then GameTooltip:AddLine(detail,0.85,0.9,0.9,true) end
+                    if self.locate then GameTooltip:AddLine(T.ClickHint(self.locate),0.6,0.8,1,true) end
+                    GameTooltip:Show()
+                end
             end)
+            r:SetScript("OnMouseUp",function(self,mouse) if mouse=="LeftButton" and self.locate then T.ShowSource(self.locate) end end)
             r:SetScript("OnLeave",function(self)
                 if not self.heading then self.background:SetColorTexture(0.12,0.18,0.19,0.35) end
                 GameTooltip:Hide()
@@ -202,7 +227,8 @@ function T.Render()
         end
         local left=options.item and 40 or 8
         local right=(options.value or click) and 114 or 8
-        r.detail=detail;r.heading=options.heading;r:ClearAllPoints();r:SetPoint("TOPLEFT",0,-height)
+        r.detail=detail;r.heading=options.heading;r.locate=options.locate and options.item or nil
+        r:ClearAllPoints();r:SetPoint("TOPLEFT",0,-height)
         r.label:ClearAllPoints();r.label:SetPoint("TOPLEFT",left,-6);r.label:SetWidth(width-left-right);r.label:SetText(text)
         r.background:SetColorTexture(0.12,0.18,0.19,options.heading and 0 or 0.35)
         local color=states[options.state]
@@ -273,7 +299,7 @@ function T.Render()
                         if not shown then heading(group.name);shown=true end
                         local action,detail,source=T.MaterialAdvice(m,T.professions[goal.profession].name.." to skill "..goal.target,goal.recipe,goal.steps)
                         row(T.ItemName(m.item).."\n"..muted..source.."|r",detail,nil,nil,
-                            {item=m.item,value=action,have=m.have,need=m.need,state=state})
+                            {item=m.item,value=action,have=m.have,need=m.need,state=state,locate=true})
                     end
                 end
             end

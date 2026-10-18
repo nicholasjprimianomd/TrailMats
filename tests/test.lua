@@ -432,7 +432,7 @@ check(#messages==n,"crafting notices can be turned off");T.settings.craftNotices
 inventory[2318]=0;event("BAG_UPDATE_DELAYED")
 C_Map.GetMapInfo=function() return {parentMapID=0} end
 currentMap=9999;event("ZONE_CHANGED_NEW_AREA")
-check(T.area==0 and #T.ZoneNeeds(165).here==0 and T.tracker.lines[1].text=="","unknown zone clears old local objectives")
+check(T.area==0 and #T.ZoneNeeds(165).here==0 and T.tracker.lines[1].text=="Collect 36 Ruined Leather Scraps" and T.tracker.lineButtons[1].item==2934 and T.tracker.lineButtons[1]:IsShown(),"unknown zone keeps the material with its skinning hint instead of pointing at a starting zone")
 currentMap=1439;event("ZONE_CHANGED_NEW_AREA")
 check(T.tracker.lines[1].text~="","returning to supported zone restores goals")
 T.tracker.open.scripts.OnClick()
@@ -510,8 +510,26 @@ check(T.window.rows[1].heading and not T.window.rows[1].accent:IsShown(),"headin
 inventory[2589]=10;event("BAG_UPDATE_DELAYED")
 check(screen():find("Collect 22 more",1,true),"Materials updates remaining quantity after looting")
 check(valueRow("Linen Cloth").bar.text.text=="10 / 32" and valueRow("Linen Cloth").bar.value==10,"the bar follows your bags")
+-- Clicking a material row pins its nearest source on the map and opens that zone.
+local pinned,openedMap,tracked
+C_Map.SetUserWaypoint=function(p) pinned=p end
+UiMapPoint={CreateFromCoordinates=function(map,x,y) return {uiMapID=map,x=x,y=y} end}
+C_SuperTrack={SetSuperTrackedUserWaypoint=function(v) tracked=v end}
+OpenWorldMap=function(map) openedMap=map end
+local linenRow=valueRow("Linen Cloth")
+check(linenRow.locate==2589,"material rows are clickable")
+GameTooltip.lines={};linenRow.scripts.OnEnter(linenRow)
+check(GameTooltip.lines[#GameTooltip.lines]=="Click: mark it on your map." and not table.concat(GameTooltip.lines," "):find("Click to mark",1,true),"row tooltip says what a click does, once")
+linenRow.scripts.OnMouseUp(linenRow,"RightButton");check(pinned==nil,"only a left click pins")
+linenRow.scripts.OnMouseUp(linenRow,"LeftButton")
+check(pinned and pinned.uiMapID==1439 and math.abs(pinned.x-0.48)<1e-9 and math.abs(pinned.y-0.38)<1e-9 and tracked==true and openedMap==1439,"clicking a material pins its nearest source and opens that map")
+check(messages[#messages]:find("Rascal, Darkshore 48.0, 38.0",1,true) and messages[#messages]:find("Marked on your map",1,true),"chat names the pinned source")
+for _,r in ipairs(T.window.rows) do if r:IsShown() and r.heading then check(not r.locate,"headings are not clickable") end end
 currentMap=9999;event("ZONE_CHANGED_NEW_AREA")
-check(screen():find("No listed source",1,true) and not screen():find("Rascal",1,true),"zone without source clears old targets and explains absence")
+check(screen():find("From: Rascal, Darkshore",1,true) and screen():find("Found in other zones",1,true) and not screen():find("No listed source",1,true),"zone without a source points to the nearest database source elsewhere")
 T.qdb=nil;T.dropDB=nil;T.sourceCache={};T.Render()
 check(screen():find("Source database unavailable",1,true),"missing provider is not presented as proof of no source")
+local unavailableHeading=false
+for _,r in ipairs(T.window.rows) do if r:IsShown() and r.heading and r.label.text:find("Source database unavailable",1,true) then unavailableHeading=true end end
+check(unavailableHeading,"without a database the group heading says so")
 print("PASS: "..checks.." assertions covering UI navigation, tracker updates, source evidence, recipes, bags, vendor stock and tooltips")

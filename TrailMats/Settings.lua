@@ -9,7 +9,7 @@ _G.BINDING_NAME_TRAILMATS_OPTIONS="Open TrailMats settings"
 
 -- Shared by every character. Recipes, prices, positions and the selected tab stay per character.
 T.defaults={announce=true,tooltips=true,craftNotices=true,trainReminder=true,sound=false,follow=true,
-    lockTracker=false,scale=1,trackerScale=1,minimap={hide=false,angle=220},
+    lockTracker=false,openMap=true,scale=1,trackerScale=1,minimap={hide=false,angle=220},
     auctionCut=0.05,neutralAuctionHouse=false,recordPrices=true}
 
 local function fill(target,source)
@@ -125,6 +125,7 @@ function T.CreateOptions()
     flag("Training reminders","Once per login when a profession reaches its trained skill cap.","trainReminder")
     flag("Play a sound with crafting notices","Uses the ready-check sound.","sound")
     flag("Switch tabs to the profession you open","Opening a crafting window selects that profession's tab in TrailMats.","follow")
+    flag("Open the map when you click a material","Clicking a material marks its nearest source on your map; this also opens the world map at that zone.","openMap")
     flag("Lock the tracker position","Stops the pinned tracker from being dragged by accident.","lockTracker")
     flag("Record prices while browsing","Keeps the lowest unit buyout of every auction house page you view. The Scan prices button works either way.","recordPrices")
     flag("Neutral auction house (15% cut)","Use the neutral auction house cut for profit and value figures. Opening the auction house in Tanaris, Stranglethorn Vale or Winterspring sets this for the session on its own.","neutralAuctionHouse")

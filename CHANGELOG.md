@@ -4,6 +4,9 @@ TrailMats is a profession companion for World of Warcraft: Forever. Counts are e
 
 ## Unreleased
 
+- Materials without a source in your zone now name the best database source elsewhere with its zone instead of "No listed source here": likely drops and friendly vendors first, then the closest. Creatures friendly to your faction are never suggested; chests, crates, rare drops, rare creatures and other dungeons are a last resort; world drops (ore, stone, gems) are named as such. Herbalists and miners are pointed at the nearest herb or ore node their skill allows (stone and gems via their vein); otherwise the node and skill are shown, bars show their smelt, and leather and fish give a skinning or fishing hint.
+- Click a material in Next step, Materials, Plan or the tracker to mark its source on your map (waypoint and in-world arrow, or TomTom when installed), open the map at that zone (not in combat), and print the coordinates. Option to not open the map.
+- The tracker fills spare lines with materials found in other zones, labelled with the zone.
 - Tailoring route follows the revised Forever guide: more Silk and Mageweave bolts, Gloves of Meditation at 120-125 and 125-140, and Red Swashbuckler's Shirt as the 140-150 alternative.
 
 ## 0.12.0 (2026-10-18)

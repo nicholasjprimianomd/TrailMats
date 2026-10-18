@@ -106,7 +106,7 @@ function T.RenderLeveling(id,row,page)
             shown=shown+1
             local action,detail,source=T.MaterialAdvice(m,T.professions[id].name.." to skill "..p.target,nil,c.steps)
             row(T.ItemName(m.item).."\n"..muted..source.."|r",detail,
-                nil,nil,{item=m.item,value=action,have=m.have,need=m.need,state=T.MaterialState(m)})
+                nil,nil,{item=m.item,value=action,have=m.have,need=m.need,state=T.MaterialState(m),locate=true})
         end
     end
     if shown==0 then row("Materials covered.","You have the supplies for this route. Check Recipes for anything you must make first or still need to learn.") end
@@ -127,10 +127,9 @@ function T.RenderMaterials(selected,row)
         "Materials for the next efficient recipe, including ingredients you do not own yet. Counts adjust with your bags and skill.")
     if skill.rank>=skill.cap then row("Train "..T.professions[id].name.." before continuing.") end
     row("Make "..goal.recipe,"Open your profession to check or learn this recipe before crafting.")
-    local groups={{key="here",name="Collect in "..T.zoneName},{key="away",name="No source listed in this zone"},
+    local groups={{key="here",name="Collect in "..T.zoneName},{key="away",name="Found in other zones"},{key="other",name="Gather, smelt or buy"},
         {key="vendor",name="Buy supplies"},{key="prepare",name="Craft first"},{key="ready",name="In your bags"}}
     local entries,current={},{}
-    local missingRaw,localRaw=0,0
     for _,m in ipairs(goal.materials) do
         if m.need>0 then
             current[m.item]=true
@@ -139,22 +138,23 @@ function T.RenderMaterials(selected,row)
             if m.missing==0 then key=(m.fromCrafts or 0)>0 and "prepare" or "ready"
             elseif m.supply or m.vendor then key="vendor"
             else
-                missingRaw=missingRaw+1
-                if T.ZoneSource(m.item) then key="here";localRaw=localRaw+1 else key="away" end
+                -- "Found in other zones" only when the database places it elsewhere; hints get their own group.
+                local gather=T.GatherSource and T.GatherSource(m.item)
+                local found=gather or (not T.ZoneSource(m.item) and T.FindSource and T.FindSource(m.item))
+                if not found then key="here"
+                elseif not found.spot then key="other"
+                else key=found.spot.area==T.area and "here" or "away" end
             end
             entries[#entries+1]={key=key,item=m.item,action=action,detail=detail,source=source,have=m.have,need=m.need,state=T.MaterialState(m)}
         end
-    end
-    if missingRaw>0 and localRaw==0 then
-        row(T.NoLocalSource().." for the missing materials.","No match in the available data does not prove the material cannot drop here.")
     end
     for _,g in ipairs(groups) do
         local shown=false
         for _,e in ipairs(entries) do
             if e.key==g.key then
-                if not shown then heading(g.key=="away" and not T.qdb and not T.dropDB and "Source database unavailable" or g.name);shown=true end
+                if not shown then heading((g.key=="away" or g.key=="other") and not T.qdb and not T.dropDB and "Source database unavailable" or g.name);shown=true end
                 row(T.ItemName(e.item).."\n"..muted..e.source.."|r",e.detail,nil,nil,
-                    {item=e.item,value=e.action,have=e.have,need=e.need,state=e.state})
+                    {item=e.item,value=e.action,have=e.have,need=e.need,state=e.state,locate=true})
             end
         end
     end
@@ -165,7 +165,7 @@ function T.RenderMaterials(selected,row)
             local detail=use
             row(T.ItemName(use.item).."\n"..muted..use.recipe.name.."|r",
                 function() return T.FutureText(detail).."\n"..T.FutureDetail(detail) end,nil,nil,
-                {item=use.item,value="Keep up to "..use.material.need,have=use.material.have,need=use.material.need,state="keep"})
+                {item=use.item,value="Keep up to "..use.material.need,have=use.material.have,need=use.material.need,state="keep",locate=true})
         end
     end
 end
@@ -179,7 +179,8 @@ function T.RenderHelp(row)
     row("Prices: compare material costs.","Each item shows its price source: your quote, the open vendor, or the auction house with the age of that price. Quotes win; vendor supplies use the cheaper of vendor and auction house. Missing prices are unknown, never free. Bags lower purchases; farming time, resale value and training costs are excluded.")
     row("Sell: what crafts and materials are worth.","Craft to sell ranks learned recipes by profit per craft after the auction house cut, using full replacement cost for materials. Your materials values held items at the auction house and at a vendor next to their keep limits. Prices are asking prices, not sales; recipes with missing prices say so. Nothing is posted, bought or marked safe to sell.")
     row("Scan prices at the auction house.","Open the auction house and click TrailMats: Scan prices below the frame; Full scan appears when the client allows one. Prices are also recorded while you browse. They expire after 14 days and are shared by your characters of one faction. Set the auction house cut under Options.")
-    row("Sources come from the database.","QuestieDB and profession references supply locations without waiting for personal loot. Some records retain Classic references. No listed source means the data has no match here, not proof of absence.")
+    row("Sources come from the database.","QuestieDB supplies creature, vendor and object sources without waiting for personal loot. When nothing is listed in your zone, the nearest source elsewhere is named with its zone. Some records retain Classic references.")
+    row("Click a material to find it on the map.","Marks the nearest source with a map waypoint and the in-world arrow, opens the map at that zone, and prints the coordinates. Works on Next step, Materials, Plan and tracker rows. Herbs, ore, leather and fish show a hint instead.")
     row("All twelve professions, one tab each.","Reviewed plans cover Leatherworking, Cooking, First Aid, Alchemy, Blacksmithing, Enchanting, Engineering and Tailoring to skill 225. Skinning, Herbalism, Mining and Fishing follow their crafting partner's plan (Leatherworking, Alchemy, Blacksmithing, Cooking) and show where to gather at your skill; herb and vein tooltips show the skill they need.")
     row("All counts use bags only.","Bank, mail and other characters are excluded. Gathering tabs share material goals with their crafting partner when it is learned. Nothing is bought or crafted automatically.")
     row("Notices: when to craft, switch and train.","Crafting notices tell you when your bags cover the whole target for the current recipe, and when a skill-up means it is time to switch recipes. Training reminders appear once per login at your trained cap. Turn each off under Options.")
