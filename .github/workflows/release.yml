@@ -19,6 +19,12 @@ on:
   push:
     tags:
       - 'v*'
+  # Manual re-run for an existing tag: Actions > Package and release > Run workflow, enter the tag.
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Tag to package, for example v0.12.0
+        required: true
 
 # Required so the packager can create the GitHub release with GITHUB_TOKEN.
 permissions:
@@ -28,17 +34,18 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      # release.sh reads CF_API_TOKEN and GH_API_TOKEN; the older names CF_API_KEY and
-      # GITHUB_OAUTH still work but are marked deprecated.
-      CF_API_TOKEN: ${{ secrets.CF_API_KEY }}
+      # Variable names as read by packager v2's release.sh (lines 494-497): CF_API_KEY or
+      # CF_API_TOKEN, WAGO_API_TOKEN, WOWI_API_TOKEN, and GITHUB_OAUTH for the GitHub release.
+      CF_API_KEY: ${{ secrets.CF_API_KEY }}
       WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
       WOWI_API_TOKEN: ${{ secrets.WOWI_API_TOKEN }}
-      GH_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Clone project
         uses: actions/checkout@v7
         with:
           fetch-depth: 0   # full history and tags; the packager needs the previous tag
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Package and release
         uses: BigWigsMods/packager@v2
