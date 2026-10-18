@@ -2,7 +2,7 @@
 
 TrailMats is a profession companion for World of Warcraft: Forever. Counts are estimates; nothing is bought, crafted or trained automatically. Dates are tag dates. Downloads: https://github.com/nicholasjprimianomd/TrailMats/releases
 
-## Unreleased
+## 0.12.1 (2026-10-18)
 
 - Materials without a source in your zone now name the best database source elsewhere with its zone instead of "No listed source here": likely drops and friendly vendors first, then the closest. Creatures friendly to your faction are never suggested; chests, crates, rare drops, rare creatures and other dungeons are a last resort; world drops (ore, stone, gems) are named as such. Herbalists and miners are pointed at the nearest herb or ore node their skill allows (stone and gems via their vein); otherwise the node and skill are shown, bars show their smelt, and leather and fish give a skinning or fishing hint.
 - Click a material in Next step, Materials, Plan or the tracker to mark its source on your map (waypoint and in-world arrow, or TomTom when installed), open the map at that zone (not in combat), and print the coordinates. Option to not open the map.
