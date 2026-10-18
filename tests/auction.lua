@@ -190,7 +190,10 @@ T.prices[2304].n=nil;p=T.CraftProfit(T.saved.recipes[2152]);check(not p.thin,"un
 T.saved.recipes[6666]={id=6666,profession=165,name="Eleven leather",learned=true,rank=20,difficulty="optimal",mats={[2318]=11},outputItem=2304,outputCount=1}
 T.prices[2318].c=25/11;p=T.CraftProfit(T.saved.recipes[6666])
 check(p.cost==25 and p.value==949 and p.profit==924,"eleven units at 25c per eleven cost exactly 25c: float noise does not add a copper")
-check(T.ProfitDetail(p):find("9s 49c after the 5% cut",1,true),"tooltip sale value is the same rounded figure")
+local function detailText(lines) local out={};for _,l in ipairs(lines) do out[#out+1]=type(l)=="table" and (l[1].." | "..l[2]) or l end;return table.concat(out,"\n") end
+local detail=detailText(T.ProfitDetail(p))
+check(detail:find("| 9s 49c",1,true) and detail:find("Sale after the 5% cut and a 1c undercut",1,true),"tooltip sale value is the same rounded figure, on its own aligned line")
+check(detail:find("11 x Light Leather, 2c each (",1,true) and detail:find("| 25c",1,true) and detail:find("Cost per craft | 25c",1,true),"each material is one line with its rounded unit price and total")
 T.prices[2318].c=100;T.saved.recipes[6666]=nil
 T.prices[2304].n=5;T.prices[2304].c=120;p=T.CraftProfit(T.saved.recipes[2152])
 check(p.value==226 and p.profit==16,"small positive profit")
@@ -203,7 +206,8 @@ T.saved.recipes[8888]={id=8888,profession=165,name="Mystery",learned=true,rank=2
 local list=T.SellRecipes(165)
 check(#list==3 and list[1].name=="Light Armor Kit" and list[2].name=="Soulbound Gizmo" and list[3].name=="Mystery" and list[3].profit==nil,"priced recipes rank by profit; unknown last")
 check(T.Signed(1688)=="+16s 88c" and T.Signed(-35)=="-35c" and T.Signed(0)=="0c","signed money tags")
-check(T.ProfitDetail(list[1]):find("even for materials in your bags",1,true) and T.ProfitDetail(list[3]):find("Missing prices: Ruined Leather Scraps",1,true),"tooltips explain replacement cost and missing prices")
+check(detailText(T.ProfitDetail(list[1])):find("even for materials in your bags",1,true) and detailText(T.ProfitDetail(list[3])):find("Missing prices: Ruined Leather Scraps.",1,true),"tooltips explain replacement cost and missing prices")
+check(detailText(T.ProfitDetail(list[3])):find("3 x Ruined Leather Scraps | price needed",1,true) and detailText(T.ProfitDetail(list[3])):find("Known cost so far | 0c",1,true),"an unpriced material says so on its line and the cost is marked partial")
 
 -- Bag value totals with keep limits.
 bags={[2318]=99,[2934]=10,[2320]=5}

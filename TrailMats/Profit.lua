@@ -95,22 +95,30 @@ function T.SellRecipes(profession)
     end)
     return list
 end
+-- Tooltip lines for a craft: one aligned {text, amount} line per material, then cost, sale, vendor and
+-- profit, with short wrapped notes between. Amounts sit on the right, so a wrap never splits one.
 function T.ProfitDetail(p)
-    local lines,mats={},{}
+    local lines={}
     for _,m in ipairs(p.mats) do
-        mats[#mats+1]=m.qty.." "..T.ItemName(m.item)..(m.unit and (" at "..T.Money(T.DisplayCopper(m.unit)).." ("..m.label..")") or " (price needed)")
+        local left=m.qty.." x "..T.ItemName(m.item)
+        if m.unit then lines[#lines+1]={left..", "..T.Money(T.DisplayCopper(m.unit)).." each ("..m.label..")",T.Money(T.DisplayCopper(m.qty*m.unit))}
+        else lines[#lines+1]={left,"price needed"} end
     end
-    lines[#lines+1]=(#p.missing>0 and "Known cost so far " or "Cost ")..T.Money(p.cost).." per craft: "..table.concat(mats,", ")..". Full replacement cost, even for materials in your bags."
+    lines[#lines+1]={#p.missing>0 and "Known cost so far" or "Cost per craft",T.Money(p.cost)}
+    lines[#lines+1]=muted.."Full replacement cost, even for materials in your bags.|r"
     if p.ah then
-        lines[#lines+1]="Sale: "..p.n.." x "..T.ItemName(p.output).." at "..T.Money(T.DisplayCopper(p.ah.copper)).." each ("..T.AuctionLabel(p.ah).."); "..
-            T.Money(p.ahValue).." after the "..percent().." cut and a 1c undercut."
+        lines[#lines+1]={p.n.." x "..T.ItemName(p.output)..", "..T.Money(T.DisplayCopper(p.ah.copper)).." each ("..T.AuctionLabel(p.ah)..")",T.Money(p.ahValue)}
+        lines[#lines+1]=muted.."Sale after the "..percent().." cut and a 1c undercut.|r"
     end
-    if p.vendorValue then lines[#lines+1]="Vendor pays "..T.Money(p.vendorValue).." for "..p.n.."."..(p.vendorBetter and " Used because it beats the auction value." or "") end
+    if p.vendorValue then
+        lines[#lines+1]={"Vendor pays for "..p.n,T.Money(p.vendorValue)}
+        if p.vendorBetter then lines[#lines+1]=muted.."Used because it beats the auction value.|r" end
+    end
     if p.bop then lines[#lines+1]="Binds when picked up: cannot be auctioned." end
     if p.thin then lines[#lines+1]="Thin market: "..plural(p.ah.listings,"listing")..". An asking price is not a sale." end
     if #p.missing>0 then lines[#lines+1]="Missing prices: "..table.concat(p.missing,", ").."." end
-    if p.profit then lines[#lines+1]="Profit "..T.Signed(p.profit).." per craft, estimated from asking prices." end
-    return table.concat(lines,"\n")
+    if p.profit then lines[#lines+1]={"Profit per craft, from asking prices",T.Signed(p.profit)} end
+    return lines
 end
 
 -- Held raw materials of the reviewed catalog and learned recipes; vendor supplies are not valued.
@@ -146,17 +154,22 @@ function T.SellMaterials(profession)
     end)
     return rows,total
 end
+-- Tooltip lines for a held material: the count, its auction and vendor value and the keep limit as
+-- aligned {text, amount} lines, with the cut and the caveats as wrapped notes.
 function T.MaterialValueDetail(m)
-    local lines={"You have "..m.have.."."}
-    if m.ah then lines[#lines+1]="Auction house: "..T.Money(m.ahValue).." after the "..percent().." cut and a 1c undercut ("..T.Money(T.DisplayCopper(m.ah.copper)).." each, "..T.AuctionLabel(m.ah)..")."
+    local lines={{"In your bags",tostring(m.have)}}
+    if m.ah then
+        lines[#lines+1]={"Auction house, "..T.Money(T.DisplayCopper(m.ah.copper)).." each ("..T.AuctionLabel(m.ah)..")",T.Money(m.ahValue)}
+        lines[#lines+1]=muted.."After the "..percent().." cut and a 1c undercut.|r"
     else lines[#lines+1]="No auction price recorded for this item." end
-    if m.vendorValue then lines[#lines+1]="Vendor pays "..T.Money(m.vendorValue).." ("..T.Money(m.sell).." each)." else lines[#lines+1]="Vendor price unknown until the client loads the item." end
+    if m.vendorValue then lines[#lines+1]={"Vendor pays, "..T.Money(m.sell).." each",T.Money(m.vendorValue)}
+    else lines[#lines+1]="Vendor price unknown until the client loads the item." end
     if m.uses then
         local c=m.uses[1].recipe
-        lines[#lines+1]="Keep up to "..m.keep.." for "..c.name..((#m.uses>1 or #(m.uses[1].parts or {})>1) and " and later recipes" or "").." (estimated)."
+        lines[#lines+1]={"Keep for "..c.name..((#m.uses>1 or #(m.uses[1].parts or {})>1) and " and later recipes" or ""),"up to "..m.keep}
     end
-    lines[#lines+1]="Reference values, not sales. Keep limits are estimates; nothing here is marked safe to sell."
-    return table.concat(lines,"\n")
+    lines[#lines+1]=muted.."Reference values, not sales. Keep limits are estimates; nothing here is marked safe to sell.|r"
+    return lines
 end
 
 function T.RenderSell(selected,row)

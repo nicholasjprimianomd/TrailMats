@@ -17,6 +17,16 @@ local function label(parent,font,w)
     local f=parent:CreateFontString(nil,"OVERLAY",font)
     f:SetWidth(w);f:SetJustifyH("LEFT");f:SetJustifyV("TOP");return f
 end
+-- A row's detail in the tooltip: a string wraps as one paragraph; a list keeps each entry on its own
+-- line, and a {left,right} pair is one aligned line, so an amount never breaks across a wrap.
+local function detailLines(detail)
+    if type(detail)=="table" then
+        for _,line in ipairs(detail) do
+            if type(line)=="table" then GameTooltip:AddDoubleLine(line[1],line[2],0.85,0.9,0.9,1,1,1)
+            else GameTooltip:AddLine(line,0.85,0.9,0.9,true) end
+        end
+    elseif detail~=nil then GameTooltip:AddLine(detail,0.85,0.9,0.9,true) end
+end
 function T.ScrollBy(amount)
     local f=T.window
     local limit=math.max(0,f.content:GetHeight()-f.scroll:GetHeight())
@@ -215,7 +225,7 @@ function T.Render()
                 local detail=type(self.detail)=="function" and self.detail() or self.detail
                 if detail or self.locate then
                     GameTooltip:SetOwner(self,"ANCHOR_RIGHT")
-                    if detail then GameTooltip:AddLine(detail,0.85,0.9,0.9,true) end
+                    detailLines(detail)
                     if self.locate then GameTooltip:AddLine(T.ClickHint(self.locate),0.6,0.8,1,true) end
                     GameTooltip:Show()
                 end
@@ -249,6 +259,7 @@ function T.Render()
                 r.bar:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
                 local track=r.bar:CreateTexture(nil,"BACKGROUND");track:SetAllPoints();track:SetColorTexture(0.13,0.19,0.21,1)
                 r.bar.text=r.bar:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall");r.bar.text:SetPoint("CENTER")
+                r.note:Hide();r.bar:Hide() -- new frames start shown; only the one this row needs is shown below
             end
             -- The first line is the action in the row's colour; a have/need bar or a quiet note sits under it.
             local action,note=tostring(options.value):match("^([^\n]*)\n?(.*)$")
@@ -270,7 +281,7 @@ function T.Render()
             r.action:SetText(actionText);r.action:SetScript("OnClick",click);r.action:Show();h=math.max(h,36)
             r.action:SetScript("OnEnter",function() if r.detail then
                 local detail=type(r.detail)=="function" and r.detail() or r.detail
-                GameTooltip:SetOwner(r.action,"ANCHOR_RIGHT");GameTooltip:AddLine(detail,0.85,0.9,0.9,true);GameTooltip:Show()
+                GameTooltip:SetOwner(r.action,"ANCHOR_RIGHT");detailLines(detail);GameTooltip:Show()
             end end)
             r.action:SetScript("OnLeave",function() GameTooltip:Hide() end)
         end

@@ -5,6 +5,7 @@ TrailMats is a profession companion for World of Warcraft: Forever. Counts are e
 ## Unreleased
 
 - Alt-click a reagent in the game's own crafting window to mark its nearest source on the map, open the map and print the coordinates, as a click on a TrailMats material row does; the reagent tooltip names the click. Plain and Shift clicks keep their usual meaning. The hook adds to the game's handlers without replacing any, on the Mainline profession window the Forever client uses and on the older TradeSkill and Craft windows of other clients.
+- Sell view: rows no longer show an empty white bar the first time the view is drawn, and the craft and material tooltips are aligned lines (one material per line with its total, then cost, sale, vendor and profit) instead of one wrapped paragraph that could split an amount such as "1s 0c" across two lines.
 
 ## 0.12.1 (2026-10-18)
 

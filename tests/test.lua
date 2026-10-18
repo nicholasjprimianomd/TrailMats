@@ -47,6 +47,7 @@ function methods:GetCenter() return 500,400 end
 function methods:GetUnit() return "Moonstalker",self.unit end
 function methods:GetItem() return "Item",self.item end
 function methods:AddLine(text) self.lines[#self.lines+1]=text end
+function methods:AddDoubleLine(left,right) self.lines[#self.lines+1]=left.." | "..right end
 local function widget() return setmetatable({scripts={},events={},shown=true,lines={}},{__index=methods}) end
 function methods:CreateFontString() return widget() end
 function methods:CreateTexture() return widget() end
@@ -387,6 +388,25 @@ T.Command("sell")
 check(T.saved.view=="sell" and T.window.sell.point[2]==T.window.leveling and screen():find("Craft to sell: Leatherworking",1,true),"/tm sell renders Craft to sell through the real UI")
 check(screen():find("Light Armor Kit",1,true) and screen():find("+16s 88c",1,true) and screen():find("AH, just now",1,true),"profit per craft after the cut, with the price age")
 check(screen():find("AH >= 93s 10c (1 item unpriced)",1,true),"held leather valued after the cut; the unpriced hide keeps the >= prefix")
+-- Rows the Sell view creates itself start with their note shown and no bar: new frames start shown, and a bar never given a colour or range is a white block.
+T.window.rows={};T.Render()
+local fresh=0
+for _,r in ipairs(T.window.rows) do if r:IsShown() and r.value and r.value:IsShown() then fresh=fresh+1;check(r.note:IsShown() and not r.bar:IsShown(),"a fresh value row shows its note, not an empty bar") end end
+check(fresh>=3,"the Sell view built fresh value rows")
+-- Hovering a craft or a held material shows aligned lines, each amount on the right, never split by a wrap.
+local function sellRow(name)
+    for _,r in ipairs(T.window.rows) do if r:IsShown() and r.label.text:find(name,1,true) and r.value and r.value:IsShown() then return r end end
+    error("no value row: "..name)
+end
+local kit=sellRow("Light Armor Kit");GameTooltip.lines={};kit.scripts.OnEnter(kit)
+local tip=table.concat(GameTooltip.lines,"\n")
+check(GameTooltip.lines[1]=="2 x Light Leather, 1s 0c each (AH, just now) | 2s 0c" and GameTooltip.lines[2]=="1 x Coarse Thread, 10c each (AH, just now) | 10c","materials one per line with their totals")
+check(tip:find("Cost per craft | 2s 10c",1,true) and tip:find("2 x Light Armor Kit, 10s 0c each (AH, just now) | 18s 98c",1,true) and tip:find("Vendor pays for 2 | 50c",1,true) and tip:find("Profit per craft, from asking prices | +16s 88c",1,true),"cost, sale, vendor and profit are aligned lines")
+for _,line in ipairs(GameTooltip.lines) do check(not line:find("\n",1,true),"no tooltip line carries its own line break") end
+kit.scripts.OnLeave(kit)
+local held=sellRow("Light Leather");GameTooltip.lines={};held.scripts.OnEnter(held)
+check(GameTooltip.lines[1]=="In your bags | 99" and GameTooltip.lines[2]=="Auction house, 1s 0c each (AH, just now) | 93s 10c" and table.concat(GameTooltip.lines,"\n"):find("Vendor price unknown",1,true),"a held material's value tooltip is aligned")
+held.scripts.OnLeave(held)
 GameTooltip.lines={};GameTooltip.trailMatsItem=nil;GameTooltip.item="|Hitem:2318|h[Light Leather]|h";T.AddItemTooltip(GameTooltip)
 check(table.concat(GameTooltip.lines," "):find("TrailMats AH: 1s 0c each (just now)",1,true) and table.concat(GameTooltip.lines," "):find("x99: 93s 10c after cut",1,true),"item tooltip shows the auction price and stack value")
 inventory[2318]=120;T.prices[2318].c=4/3;GameTooltip.lines={};GameTooltip.trailMatsItem=nil;T.AddItemTooltip(GameTooltip)
