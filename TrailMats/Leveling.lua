@@ -57,7 +57,11 @@ function T.LevelingCost(item,amount)
             end
         end
     end
-    if best then return best,"Open vendor; whole packs" end
+    local ah=T.AuctionPrice and T.AuctionPrice(item)
+    local auction=ah and math.ceil(ah.copper*amount)
+    -- Vendor supplies take the cheaper of the open vendor and the auction house; the vendor alone when the AH is unknown.
+    if best and (not auction or best<=auction) then return best,"Open vendor; whole packs" end
+    if auction then return auction,ah.source..(ah.source~="TSM" and (", "..T.AgeText(ah.at)) or "") end
     return nil,"Price needed"
 end
 

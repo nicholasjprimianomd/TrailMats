@@ -6,7 +6,7 @@
 ## IconTexture: Interface\Icons\INV_Misc_Bag_10
 ## Category: Professions
 ## OptionalDeps: QuestieDB, Questie
-## SavedVariables: TrailMatsSettings
+## SavedVariables: TrailMatsSettings, TrailMatsPrices
 ## SavedVariablesPerCharacter: TrailMatsDB
 ## X-Website: https://github.com/nicholasjprimianomd/TrailMats
 ## X-License: MIT
@@ -21,6 +21,8 @@ Planner.lua
 Sources.lua
 Client.lua
 Actions.lua
+Auction.lua
+Profit.lua
 Settings.lua
 Minimap.lua
 Notices.lua

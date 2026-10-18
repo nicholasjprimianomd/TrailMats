@@ -61,16 +61,19 @@ function T.RenderLeveling(id,row,page)
         p.pricedCount.." of "..p.candidateCount.." reviewed routes fully priced. Compares additional material spending using bags, your quotes and current vendor packs. Unknown prices are never free.\n"..
         "Only supported recipe combinations are compared. Gathering time, resale value, training, recipe books and the value of owned materials are excluded. Without complete prices, routes favor materials already held. Quotes may need updating.") end
     if page=="prices" then
-        row(gold.."Prices per item|r","Your quote overrides the open vendor. Blank clears it. Prices do not confirm auction stock; update old quotes when the market changes.")
+        row(gold.."Prices per item|r","Your quote overrides the open vendor and recorded auction prices. Blank clears it. Prices do not confirm auction stock; update old quotes when the market changes.")
+        if T.AuctionSummary and T.AuctionSummary().count==0 then
+            row("Scan prices at an auction house to fill these.","Open the auction house and click TrailMats: Scan prices. Browsing the auction house also records prices.")
+        end
         for _,item in ipairs(p.priceItems) do
             local itemID=item
             local quote=T.saved.levelingPrices[item]
-            local cost,source=T.LevelingCost(item,1)
-            local value=quote and (T.Money(quote.copper).." each") or cost and (T.Money(cost).." / vendor pack") or "No price"
+            local unit,source=T.BuyUnit(item)
+            local value=unit and (T.Money(math.ceil(unit)).." each") or "No price"
             local detail="Enter copper per item. Blank removes your quote."
             if quote and quote.at and date then detail=detail.."\nSaved "..date("%b %d %H:%M",quote.at) end
-            if source then detail=detail.."\n"..source end
-            row(T.ItemName(item).."\n"..muted..value.."|r",detail,"Edit",function() T.EditLevelingPrice(itemID) end,{item=item})
+            detail=detail.."\n"..source..(source=="Open vendor" and "; routes buy whole packs" or "")
+            row(T.ItemName(item).."\n"..muted..value.." | "..source.."|r",detail,"Edit",function() T.EditLevelingPrice(itemID) end,{item=item})
         end
         return
     end
@@ -173,11 +176,13 @@ function T.RenderHelp(row)
     row("Materials: what to collect here and save for later.","The list includes materials you do not own yet and database sources in your current zone. Keep limits follow each material through its useful leveling ranges, including later recipes and ingredient preparation. Limits shrink as skill rises. Different materials may be alternatives; you do not need to collect every limit. Unlisted items may still be useful.")
     row("Plan: materials to 75, 150 or 225.","Recipes shows the crafting order and how to obtain each recipe. Counts are estimates; stop at each step's skill target. Training and recipe books may cost extra. Routes to 300 are not yet complete.")
     row("Pin: keep a small list on screen.","Pins one profession until you unpin it. Drag the tracker to move it. Open returns to Next step. It follows your bags and current zone, including while the main window is closed.")
-    row("Prices: compare material costs.","Enter copper per item. Your quotes and the open vendor are used to compare supported routes. Missing prices are unknown. No automatic Auction House scan. Bags lower purchases; farming time, resale value and training costs are excluded.")
+    row("Prices: compare material costs.","Each item shows its price source: your quote, the open vendor, or the auction house with the age of that price. Quotes win; vendor supplies use the cheaper of vendor and auction house. Missing prices are unknown, never free. Bags lower purchases; farming time, resale value and training costs are excluded.")
+    row("Sell: what crafts and materials are worth.","Craft to sell ranks learned recipes by profit per craft after the auction house cut, using full replacement cost for materials. Your materials values held items at the auction house and at a vendor next to their keep limits. Prices are asking prices, not sales; recipes with missing prices say so. Nothing is posted, bought or marked safe to sell.")
+    row("Scan prices at the auction house.","Open the auction house and click TrailMats: Scan prices below the frame; Full scan appears when the client allows one. Prices are also recorded while you browse. They expire after 14 days and are shared by your characters of one faction. Set the auction house cut under Options.")
     row("Sources come from the database.","QuestieDB and profession references supply locations without waiting for personal loot. Some records retain Classic references. No listed source means the data has no match here, not proof of absence.")
     row("All counts use bags only.","Bank, mail and other characters are excluded. Fishing and Skinning share material goals with Cooking and Leatherworking when those professions are learned. Nothing is bought or crafted automatically.")
     row("Notices: when to craft, switch and train.","Crafting notices tell you when your bags cover the whole target for the current recipe, and when a skill-up means it is time to switch recipes. Training reminders appear once per login at your trained cap. Turn each off under Options.")
     row("Options: minimap button, notices, scale.","Open with the Options button, /tm options, or the game's AddOns settings. Settings are shared by all your characters. Escape closes this window. Key bindings are under Key Bindings > AddOns.")
-    row("Commands", "/tm: open or close\n/tm now, /tm keep, /tm mats: change view\n/tm track: toggle tracker for selected profession\n/tm options: settings\n/tm minimap: show or hide the minimap button\n/tm refresh: update recipes and sources\n/tm quiet: zone notices\n/tm tips: item and creature tooltips\n/tm auto: reset destination and recipe choices\n/tm status: version and database status")
+    row("Commands", "/tm: open or close\n/tm now, /tm keep, /tm mats, /tm sell: change view\n/tm track: toggle tracker for selected profession\n/tm options: settings\n/tm minimap: show or hide the minimap button\n/tm refresh: update recipes and sources\n/tm quiet: zone notices\n/tm tips: item and creature tooltips\n/tm auto: reset destination and recipe choices\n/tm status: version and database status")
     row("Version "..T.version, "WoW Forever. Supported professions: Leatherworking, Cooking, First Aid, Skinning and Fishing. Guide coverage and live recipe availability can differ during the beta.")
 end
