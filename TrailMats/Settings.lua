@@ -9,7 +9,8 @@ _G.BINDING_NAME_TRAILMATS_OPTIONS="Open TrailMats settings"
 
 -- Shared by every character. Recipes, prices, positions and the selected tab stay per character.
 T.defaults={announce=true,tooltips=true,craftNotices=true,trainReminder=true,sound=false,follow=true,
-    lockTracker=false,scale=1,trackerScale=1,minimap={hide=false,angle=220}}
+    lockTracker=false,scale=1,trackerScale=1,minimap={hide=false,angle=220},
+    auctionCut=0.05,neutralAuctionHouse=false,recordPrices=true}
 
 local function fill(target,source)
     for key,value in pairs(source) do
@@ -120,9 +121,12 @@ function T.CreateOptions()
     flag("Play a sound with crafting notices","Uses the ready-check sound.","sound")
     flag("Switch tabs to the profession you open","Opening a crafting window selects that profession's tab in TrailMats.","follow")
     flag("Lock the tracker position","Stops the pinned tracker from being dragged by accident.","lockTracker")
+    flag("Record prices while browsing","Keeps the lowest unit buyout of every auction house page you view. The Scan prices button works either way.","recordPrices")
+    flag("Neutral auction house (15% cut)","Use the neutral auction house cut for profit and value figures. Opening the auction house in Tanaris, Stranglethorn Vale or Winterspring sets this for the session on its own.","neutralAuctionHouse")
     y=y-6
     add(slider(panel,y,"Window scale","Size of the main window.",0.7,1.3,0.05,function() return T.settings.scale end,function(v) T.settings.scale=v end));y=y-56
     add(slider(panel,y,"Tracker scale","Size of the pinned tracker.",0.7,1.5,0.05,function() return T.settings.trackerScale end,function(v) T.settings.trackerScale=v end));y=y-56
+    add(slider(panel,y,"Auction house cut","Share of each sale kept by the auction house in profit and value figures. Faction houses take 5%; the neutral option above overrides this with 15%.",0,0.2,0.01,function() return T.settings.auctionCut end,function(v) T.settings.auctionCut=v end));y=y-56
     local function action(text,x,click)
         local b=CreateFrame("Button",nil,panel,"UIPanelButtonTemplate")
         b:SetSize(130,24);b:SetText(text);b:SetPoint("TOPLEFT",x,y);b:SetScript("OnClick",click);return b

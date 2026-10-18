@@ -50,7 +50,7 @@ function T.Command(command)
         T.saved.hidden=T.window:IsShown()
         T.window:SetShown(not T.saved.hidden)
     elseif command=="refresh" then T.ConnectDatabase();T.Refresh(true,false)
-    elseif command=="keep" or command=="mats" or command=="now" or command=="help" then
+    elseif command=="keep" or command=="mats" or command=="now" or command=="help" or command=="sell" then
         T.saved.view=command=="mats" and "leveling" or command=="now" and "overview" or command
         T.saved.hidden=false;T.window:Show();T.Render()
     elseif command=="track" then T.ToggleTracker()
@@ -76,7 +76,7 @@ frame:SetScript("OnEvent",function(_,event,name)
             if type(T.saved[key])~="table" then T.saved[key]={} end
         end
         if type(T.saved.levelingPrices)~="table" then T.saved.levelingPrices={} end
-        if T.saved.view~="overview" and T.saved.view~="keep" and T.saved.view~="leveling" and T.saved.view~="help" then T.saved.view="overview" end
+        if T.saved.view~="overview" and T.saved.view~="keep" and T.saved.view~="leveling" and T.saved.view~="sell" and T.saved.view~="help" then T.saved.view="overview" end
         T.LoadSettings()
         T.ConnectDatabase();T.ReadSkills();T.ReadZone();T.CreateWindow();T.CreateTracker();T.InstallTooltips();T.InstallMerchantHook()
         T.CreateMinimapButton();T.CreateOptions();T.ApplySettings()

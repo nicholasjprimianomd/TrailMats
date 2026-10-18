@@ -64,6 +64,7 @@ function T.CreateWindow()
     f.overview=button(f,"Next step",94,function() T.saved.view="overview";T.Render() end)
     f.keep=button(f,"Materials",94,function() T.saved.view="keep";T.Render() end)
     f.leveling=button(f,"Plan",74,function() T.saved.view="leveling";T.Render() end)
+    f.sell=button(f,"Sell",60,function() T.saved.view="sell";T.Render() end)
     f.skill=label(f,"GameFontHighlight",484)
     f.progress=CreateFrame("StatusBar",nil,f);f.progress:SetSize(484,6)
     f.progress:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8");f.progress:SetStatusBarColor(0.36,0.72,0.59)
@@ -137,7 +138,7 @@ function T.Render()
     if not T.window or not T.plan or not T.window:IsShown() then return end
     local f=T.window;local selected=T.SelectedProfession()
     local view=T.saved.view
-    local keep=view=="keep";local leveling=view=="leveling";local help=view=="help"
+    local keep=view=="keep";local leveling=view=="leveling";local sell=view=="sell";local help=view=="help"
     f.activeKey=tostring(selected)..":"..view..(leveling and (":"..(f.planPage or "materials")) or "")
     local scroll=f.positions[f.activeKey] or 0
     f.activeProfession=selected
@@ -162,8 +163,9 @@ function T.Render()
     f.overview:ClearAllPoints();f.overview:SetPoint("TOPLEFT",18,-y-32)
     f.keep:ClearAllPoints();f.keep:SetPoint("LEFT",f.overview,"RIGHT",6,0)
     f.leveling:ClearAllPoints();f.leveling:SetPoint("LEFT",f.keep,"RIGHT",6,0)
-    f.help:ClearAllPoints();f.help:SetPoint("LEFT",f.leveling,"RIGHT",6,0)
-    for name,b in pairs({overview=f.overview,keep=f.keep,leveling=f.leveling,help=f.help}) do
+    f.sell:ClearAllPoints();f.sell:SetPoint("LEFT",f.leveling,"RIGHT",6,0)
+    f.help:ClearAllPoints();f.help:SetPoint("LEFT",f.sell,"RIGHT",6,0)
+    for name,b in pairs({overview=f.overview,keep=f.keep,leveling=f.leveling,sell=f.sell,help=f.help}) do
         if view==name then b:LockHighlight() else b:UnlockHighlight() end
     end
     y=y+32
@@ -252,6 +254,7 @@ function T.Render()
     elseif not d then row("Learn a profession, then Refresh.")
     elseif leveling then T.RenderLeveling(selected,row,f.planPage or "materials")
     elseif keep then T.RenderMaterials(selected,row)
+    elseif sell then T.RenderSell(selected,row)
     else
         local action=T.NextAction(selected)
         local op=T.plan.opportunities[selected]
@@ -330,6 +333,13 @@ function T.AddItemTooltip(tooltip)
             for _,v in ipairs(T.CurrentMerchantSuggestions()) do if v.item==item then tooltip:AddLine(T.MerchantText(v),0.8,0.9,0.8,true) end end
             added=true;break
         end
+    end
+    local ah=T.AuctionPrice and T.AuctionPrice(item)
+    if ah then
+        tooltip:AddLine("TrailMats AH: "..T.Money(math.ceil(ah.copper)).." each ("..(ah.source=="TSM" and "TSM" or (T.AgeText(ah.at)..(ah.source~="AH" and (", "..ah.source) or "")))..")",0.8,0.9,0.8,true)
+        local have=T.Count(item)
+        if have>1 then tooltip:AddLine("x"..have..": "..T.Money(T.FloorCopper(have*math.max(0,ah.copper-1)*(1-T.AuctionCut()))).." after cut",0.8,0.9,0.8,true) end
+        added=true
     end
     if added then tooltip:Show() end
 end
