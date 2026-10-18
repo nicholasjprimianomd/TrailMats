@@ -3,7 +3,7 @@ _G.TrailMats=T
 local frame=CreateFrame("Frame")
 T.eventFrame=frame
 local pending,scanPending,announcePending=false,false,false
-local lastArea
+local lastZone
 
 function T.Print(message)
     if DEFAULT_CHAT_FRAME then DEFAULT_CHAT_FRAME:AddMessage("|cffffd27fTrailMats:|r "..message) end
@@ -16,9 +16,9 @@ function T.Refresh(scan,announce)
     T.ReadMerchant()
     T.plan=T.BuildPlan()
     T.Render();T.RenderTracker();T.MarkMerchant()
-    local key=T.area~=0 and T.area or T.zoneName
-    if announce and key~=lastArea then
-        lastArea=key
+    -- Loading screens have no zone yet, and an area ID can arrive after its name; neither is a new zone.
+    if announce and T.zoneKnown and T.zoneName~=lastZone then
+        lastZone=T.zoneName
         if T.saved.announce then
             T.Print(T.zoneName.." | /tm")
         end

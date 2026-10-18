@@ -57,7 +57,10 @@ function T.ReadZone()
     end
     T.map=map
     T.area=area or 0
-    T.zoneName=(T.zones[T.area] and T.zones[T.area].name) or safe(GetRealZoneText) or "Unknown zone"
+    local name=(T.zones[T.area] and T.zones[T.area].name) or safe(GetRealZoneText)
+    if name=="" then name=nil end
+    T.zoneKnown=name~=nil
+    T.zoneName=name or "Unknown zone"
 end
 
 local function storeRecipe(id,profession,name,mats,difficulty,rank)

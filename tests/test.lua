@@ -114,6 +114,15 @@ check(T.plan.professions[356].minimum==1,"Fishing 75 is not an entry requirement
 check(not T.plan.opportunities[165],"no unlearned recipe guesses")
 check(T.plan.rows==nil,"no mixed material shopping list")
 local before=#messages;event("ZONE_CHANGED");check(#messages==before,"no repeated zone announcement")
+-- Loading into Ashenvale: quiet while the zone is unknown, one notice once named, none when Questie's area ID follows.
+local liveMap=C_Map;C_Map={};GetRealZoneText=function() return nil end
+event("PLAYER_ENTERING_WORLD");check(#messages==before,"no notice before the zone is known")
+currentMap=1440;C_Map={GetBestMapForUnit=liveMap.GetBestMapForUnit};GetRealZoneText=function() return "Ashenvale" end
+local zoneDB=T.zoneDB;T.zoneDB=nil;event("ZONE_CHANGED_NEW_AREA")
+check(#messages==before+1 and messages[#messages]:find("Ashenvale | /tm",1,true),"one notice once the zone is named")
+C_Map=liveMap;T.zoneDB=zoneDB;event("ZONE_CHANGED")
+check(T.area==331 and #messages==before+1,"area ID arriving later is not a second notice")
+currentMap=1438;GetRealZoneText=function() return "Test zone" end;event("ZONE_CHANGED_NEW_AREA")
 for _,id in ipairs(T.tabOrder) do check(T.window.tabs[id]:IsShown(),"possessed profession has tab") end
 T.window.tabs[129].scripts.OnClick();check(T.saved.profession==129,"tab changes selection")
 local function screen()
