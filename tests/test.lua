@@ -118,6 +118,7 @@ GetMerchantItemLink=function(i) return "|Hitem:"..merchant[i].id.."|h[item]|h" e
 GetMerchantItemID=function(i) return merchant[i].id end
 BuyMerchantItem=function() error("must never buy") end
 DoTradeSkill=function() error("must never craft") end
+for _,name in ipairs({"PlaceAuctionBid","BuyoutAuction","PostAuction","StartAuction","CancelAuction"}) do _G[name]=function() error(name.." must never be called") end end
 
 TrailMatsDB={announce=false} -- a character that turned zone notices off before settings became account-wide
 event("ADDON_LOADED","TrailMats");event("PLAYER_LOGIN")
@@ -360,6 +361,18 @@ GetTradeSkillItemLink=function() return "|Hitem:2304|h[Light Armor Kit]|h" end
 GetTradeSkillNumMade=function() return 2,2 end
 event("TRADE_SKILL_SHOW")
 check(T.saved.recipes[2152].outputItem==2304 and T.saved.recipes[2152].outputCount==2,"scan captures actual output yield")
+-- Sell view: profit per craft from a mocked price store, rendered through the real window.
+check(T.window.sell and T.window.sell.text=="Sell","Sell button exists")
+GetItemInfo=function(id) if id==2304 then return "Light Armor Kit",nil,nil,nil,nil,nil,nil,nil,nil,nil,25,nil,nil,0 end end
+T.LoadPrices();T.prices[2304]={c=1000,a=os.time(),n=5};T.prices[2318]={c=100,a=os.time(),n=9};T.prices[2320]={c=10,a=os.time(),n=4}
+T.Command("sell")
+check(T.saved.view=="sell" and T.window.sell.point[2]==T.window.leveling and screen():find("Craft to sell: Leatherworking",1,true),"/tm sell renders Craft to sell through the real UI")
+check(screen():find("Light Armor Kit",1,true) and screen():find("+16s 88c",1,true) and screen():find("AH, just now",1,true),"profit per craft after the cut, with the price age")
+check(screen():find("AH >= 93s 10c (1 item unpriced)",1,true),"held leather valued after the cut; the unpriced hide keeps the >= prefix")
+GameTooltip.lines={};GameTooltip.trailMatsItem=nil;GameTooltip.item="|Hitem:2318|h[Light Leather]|h";T.AddItemTooltip(GameTooltip)
+check(table.concat(GameTooltip.lines," "):find("TrailMats AH: 1s 0c each (just now)",1,true) and table.concat(GameTooltip.lines," "):find("x99: 93s 10c after cut",1,true),"item tooltip shows the auction price and stack value")
+T.saved.view="sell";event("ADDON_LOADED","TrailMats");check(T.saved.view=="sell","sell view survives a reload")
+T.prices[2304]=nil;T.prices[2318]=nil;T.prices[2320]=nil;GetItemInfo=nil;T.Command("now")
 -- Compact screens, local targets and an independently pinned tracker.
 T.qdb={Item={npcDrops=function(id) return itemNpcs[id] end},
     Npc={name=function(id) return npcNames[id] end,spawns=function(id) return npcSpawns[id] end}}
