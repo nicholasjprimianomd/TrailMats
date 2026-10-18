@@ -336,7 +336,7 @@ function T.AddItemTooltip(tooltip)
     end
     local ah=T.AuctionPrice and T.AuctionPrice(item)
     if ah then
-        tooltip:AddLine("TrailMats AH: "..T.Money(math.ceil(ah.copper)).." each ("..(ah.source=="TSM" and "TSM" or (T.AgeText(ah.at)..(ah.source~="AH" and (", "..ah.source) or "")))..")",0.8,0.9,0.8,true)
+        tooltip:AddLine("TrailMats AH: "..T.Money(T.DisplayCopper(ah.copper)).." each ("..(ah.source=="TSM" and "TSM" or (T.AgeText(ah.at)..(ah.source~="AH" and (", "..ah.source) or "")))..")",0.8,0.9,0.8,true)
         local have=T.Count(item)
         if have>1 then tooltip:AddLine("x"..have..": "..T.Money(T.FloorCopper(have*math.max(0,ah.copper-1)*(1-T.AuctionCut()))).." after cut",0.8,0.9,0.8,true) end
         added=true

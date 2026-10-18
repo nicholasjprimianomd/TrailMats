@@ -65,9 +65,9 @@ local function tooltip(frame,detail)
     frame:SetScript("OnLeave",function() GameTooltip:Hide() end)
 end
 
-local function checkbox(panel,y,text,detail,get,set)
+local function checkbox(panel,x,y,text,detail,get,set)
     local b=CreateFrame("CheckButton",nil,panel,"UICheckButtonTemplate")
-    b:SetSize(26,26);b:SetPoint("TOPLEFT",14,y)
+    b:SetSize(26,26);b:SetPoint("TOPLEFT",x,y)
     b.label=panel:CreateFontString(nil,"OVERLAY","GameFontHighlight")
     b.label:SetPoint("LEFT",b,"RIGHT",4,0);b.label:SetText(text)
     b.get=get
@@ -109,11 +109,16 @@ function T.CreateOptions()
     panel.controls={}
     local y=-68
     local function add(c) panel.controls[#panel.controls+1]=c;return c end
+    -- Checkboxes fill two columns so the page fits the game's settings canvas.
+    local column=0
+    local function slot() local x,row=column==0 and 14 or 296,y;column=1-column;if column==0 then y=y-28 end;return x,row end
     local function flag(text,detail,key)
-        add(checkbox(panel,y,text,detail,function() return T.settings[key] end,function(v) T.settings[key]=v end));y=y-28
+        local x,row=slot()
+        add(checkbox(panel,x,row,text,detail,function() return T.settings[key] end,function(v) T.settings[key]=v end))
     end
-    add(checkbox(panel,y,"Show the minimap button","Left-click opens TrailMats. Right-click pins the tracker. Shift-click opens these settings. Drag it around the minimap.",
-        function() return not T.settings.minimap.hide end,function(v) T.settings.minimap.hide=not v end));y=y-28
+    local x,row=slot()
+    add(checkbox(panel,x,row,"Show the minimap button","Left-click opens TrailMats. Right-click pins the tracker. Shift-click opens these settings. Drag it around the minimap.",
+        function() return not T.settings.minimap.hide end,function(v) T.settings.minimap.hide=not v end))
     flag("Zone notices in chat","One line when you enter a new zone, with the /tm reminder.","announce")
     flag("Item and creature hints in tooltips","Shows how many more of an item the current recipe needs, and which creatures have a database source.","tooltips")
     flag("Crafting notices","Says when your bags cover the whole target for the current recipe, and when a skill-up means it is time to switch recipes.","craftNotices")
@@ -123,6 +128,7 @@ function T.CreateOptions()
     flag("Lock the tracker position","Stops the pinned tracker from being dragged by accident.","lockTracker")
     flag("Record prices while browsing","Keeps the lowest unit buyout of every auction house page you view. The Scan prices button works either way.","recordPrices")
     flag("Neutral auction house (15% cut)","Use the neutral auction house cut for profit and value figures. Opening the auction house in Tanaris, Stranglethorn Vale or Winterspring sets this for the session on its own.","neutralAuctionHouse")
+    if column==1 then y=y-28 end
     y=y-6
     add(slider(panel,y,"Window scale","Size of the main window.",0.7,1.3,0.05,function() return T.settings.scale end,function(v) T.settings.scale=v end));y=y-56
     add(slider(panel,y,"Tracker scale","Size of the pinned tracker.",0.7,1.5,0.05,function() return T.settings.trackerScale end,function(v) T.settings.trackerScale=v end));y=y-56

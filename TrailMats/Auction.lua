@@ -50,6 +50,7 @@ end
 -- of a copper before rounding never changes one and never adds or drops a copper.
 function T.CeilCopper(x) return math.ceil(x-1e-6) end
 function T.FloorCopper(x) return math.floor(x+1e-6) end
+function T.DisplayCopper(x) return math.floor(x+0.5) end -- a unit price shown on its own, rounded to the nearest copper
 
 local function valid(copper,at,t)
     return type(copper)=="number" and copper>0 and copper<math.huge and type(at)=="number" and t-at<=EXPIRE
@@ -64,7 +65,8 @@ function T.AuctionPrice(item)
     if api then
         local price=T.Safe(api.GetAuctionPriceByItemID,"TrailMats",item)
         local days=T.Safe(api.GetAuctionAgeByItemID,"TrailMats",item)
-        local at=t-(type(days)=="number" and days>=0 and days*86400 or 0)
+        -- Auctionator reports whole days; count a day-old price as half a day old so a fresher own observation still wins.
+        local at=t-((type(days)=="number" and days>=0 and days or 0)+0.5)*86400
         if valid(price,at,t) and (not best or at>best.at) then best={copper=price,at=at,source="Auctionator"} end
     end
     if TSM_API and type(TSM_API.GetCustomPriceValue)=="function" then
@@ -170,6 +172,12 @@ function T.AuctionScanItems(profession)
 end
 
 local function priced(s) local n=0;for _ in pairs(s.found) do n=n+1 end;return n end
+-- Rows already read from a replicate list are kept when the scan stops early.
+local function keepRead(s)
+    if s and s.backend=="replicate" and s.page then
+        T.MergePrices(s.page);for item in pairs(s.page) do s.found[item]=true end;s.page=nil
+    end
+end
 local function finish(text)
     T.auctionScan=nil;T.auctionResult=text
     T.UpdateAuctionControls()
@@ -203,7 +211,7 @@ function T.StartAuctionScan(profession)
 end
 function T.StopAuctionScan()
     local s=T.auctionScan
-    if s then finish("Stopped: "..priced(s).." prices kept") end
+    if s then keepRead(s);finish("Stopped: "..priced(s).." prices kept") end
 end
 function T.AuctionProgress()
     local s=T.auctionScan
@@ -298,7 +306,7 @@ tick=function(self,elapsed)
         end
     elseif s and s.backend=="modern" then
         if s.pending and throttleReady() then
-            local what=s.pending;s.pending=nil;s.waiting=true
+            local what=s.pending;s.pending=nil;s.waiting=true;s.sent=what
             local ok=what=="browse" and pcall(C_AuctionHouse.SendBrowseQuery,browseQuery()) or what=="more" and pcall(C_AuctionHouse.RequestMoreBrowseResults)
             if not ok then finish("Browse failed: "..priced(s).." prices kept");return end
         end
@@ -320,7 +328,7 @@ tick=function(self,elapsed)
         end
     end
     T.auctionElapsed=(T.auctionElapsed or 0)+(elapsed or 0)
-    if s or T.auctionElapsed>=1 then T.auctionElapsed=0;T.UpdateAuctionControls() end
+    if T.auctionElapsed>=(s and 0.25 or 1) then T.auctionElapsed=0;T.UpdateAuctionControls() end
     if not s and not T.auctionOpen then frame:SetScript("OnUpdate",nil) end
 end
 
@@ -334,7 +342,7 @@ local function onEvent(_,event,arg1)
         createControls();frame:SetScript("OnUpdate",tick)
     elseif event=="AUCTION_HOUSE_CLOSED" then
         T.auctionOpen=false
-        if s then finish("Stopped: "..priced(s).." prices kept") end
+        if s then keepRead(s);finish("Stopped: "..priced(s).." prices kept") end
         T.auctionResult=nil;frame:SetScript("OnUpdate",nil)
         if T.Queue then T.Queue(false,false) end
     elseif event=="AUCTION_ITEM_LIST_UPDATE" then
@@ -366,6 +374,9 @@ local function onEvent(_,event,arg1)
         if s and s.backend=="modern" and s.waiting then finish("Browse failed: "..priced(s).." prices kept") end
     elseif event=="AUCTION_HOUSE_THROTTLED_SYSTEM_READY" then
         if s then tick(frame,0) end
+    elseif event=="AUCTION_HOUSE_THROTTLED_MESSAGE_DROPPED" then
+        -- The server dropped our browse request; send the same request again once the throttle clears.
+        if s and s.backend=="modern" and s.waiting then s.waiting=false;s.pending=s.sent or "browse" end
     elseif event=="COMMODITY_SEARCH_RESULTS_UPDATED" then
         if recording() then T.MergePrices(T.ReadCommodityResults(arg1)) end
     elseif event=="ITEM_SEARCH_RESULTS_UPDATED" then
@@ -377,7 +388,7 @@ local function onEvent(_,event,arg1)
 end
 frame:SetScript("OnEvent",onEvent)
 for _,event in ipairs({"ADDON_LOADED","PLAYER_LOGIN","AUCTION_HOUSE_SHOW","AUCTION_HOUSE_CLOSED","AUCTION_ITEM_LIST_UPDATE","REPLICATE_ITEM_LIST_UPDATE",
-    "AUCTION_HOUSE_BROWSE_RESULTS_UPDATED","AUCTION_HOUSE_BROWSE_RESULTS_ADDED","AUCTION_HOUSE_BROWSE_FAILURE","AUCTION_HOUSE_THROTTLED_SYSTEM_READY",
+    "AUCTION_HOUSE_BROWSE_RESULTS_UPDATED","AUCTION_HOUSE_BROWSE_RESULTS_ADDED","AUCTION_HOUSE_BROWSE_FAILURE","AUCTION_HOUSE_THROTTLED_SYSTEM_READY","AUCTION_HOUSE_THROTTLED_MESSAGE_DROPPED",
     "COMMODITY_SEARCH_RESULTS_UPDATED","ITEM_SEARCH_RESULTS_UPDATED"}) do
     pcall(frame.RegisterEvent,frame,event)
 end

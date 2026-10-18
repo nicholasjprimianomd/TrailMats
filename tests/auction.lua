@@ -232,7 +232,10 @@ Auctionator={API={v1={GetAuctionPriceByItemID=function(caller,id) check(caller==
     GetAuctionAgeByItemID=function(_,id) return extAge[id] end}}}
 T.prices[2318].a=clock-3600
 ext[2318]=80;extAge[2318]=1;ah=T.AuctionPrice(2318);check(ah.copper==100 and ah.source=="AH","older Auctionator price loses to own data")
-extAge[2318]=0;ah=T.AuctionPrice(2318);check(ah.copper==80 and ah.source=="Auctionator" and ah.at==clock,"fresher Auctionator price wins with its label")
+-- Auctionator ages are whole days, so "0 days" counts as half a day old: an own price from an hour ago still wins.
+extAge[2318]=0;ah=T.AuctionPrice(2318);check(ah.copper==100 and ah.source=="AH","day-old Auctionator price does not outrank own data from this hour")
+T.prices[2318].a=clock-2*86400;ah=T.AuctionPrice(2318);check(ah.copper==80 and ah.source=="Auctionator" and ah.at==clock-43200,"fresher Auctionator price wins with its label")
+T.prices[2318].a=clock-3600
 ext[2318]=0;check(T.AuctionPrice(2318).source=="AH","Auctionator 0 is unknown, not a price")
 ext[2318]=nil;check(T.AuctionPrice(2318).copper==100,"Auctionator nil is unknown")
 ext[2934]=0;check(T.AuctionPrice(2934)==nil,"no own data and Auctionator 0 stays nil")
@@ -283,6 +286,10 @@ check(T.prices[2592].c==30 and T.auctionScan and T.auctionScan.pending=="browse"
 event("AUCTION_HOUSE_BROWSE_FAILURE");check(T.auctionScan and T.auctionScan.pending=="browse","a foreign browse failure does not end a scan that has sent nothing")
 browse.full=false;browse.ready=true;event("AUCTION_HOUSE_THROTTLED_SYSTEM_READY")
 check(#browse.sent==1 and browse.sent[1].searchString=="" and browse.sent[1].sorts[1].sortOrder==1 and browse.sent[1].sorts[1].reverseSort==false,"empty browse query sorted by name")
+-- A dropped throttled message is resent once the throttle clears instead of leaving the scan waiting forever.
+browse.ready=false;event("AUCTION_HOUSE_THROTTLED_MESSAGE_DROPPED")
+check(T.auctionScan and not T.auctionScan.waiting and T.auctionScan.pending=="browse" and #browse.sent==1,"dropped browse goes back to pending")
+browse.ready=true;event("AUCTION_HOUSE_THROTTLED_SYSTEM_READY");check(#browse.sent==2 and T.auctionScan.waiting,"dropped browse is sent again")
 browse.results={{itemKey={itemID=2318},minPrice=50,totalQuantity=10},{itemKey={itemID=2318,itemLevel=5},minPrice=40,totalQuantity=1},{itemKey={itemID=2589},minPrice=0,totalQuantity=3}}
 browse.ready=false;event("AUCTION_HOUSE_BROWSE_RESULTS_UPDATED")
 check(T.prices[2318].c==40 and T.prices[2318].n==nil and T.prices[2589]==nil,"minimum across item keys per item id; zero prices skipped; listings unknown")
@@ -308,6 +315,11 @@ check(T.auctionScan==nil and T.auctionResult=="Done: 2 prices" and T.prices[2318
 check(T.AuctionStatus()=="Done: 2 prices | Full scan available in 15:00","cooldown countdown after a full scan")
 clock=clock+320;check(T.AuctionStatus():find("Full scan available in 9:40",1,true),"countdown counts down")
 clock=clock+600;check(T.FullScanState().ready and T.AuctionStatus()=="Done: 2 prices","full scan available again after 15 minutes")
+-- Stopping a full scan early keeps the rows already read.
+T.prices[2318]=nil;T.prices[2934]=nil
+check(T.StartFullScan(),"second full scan starts after the cooldown");event("REPLICATE_ITEM_LIST_UPDATE");tick()
+T.StopAuctionScan()
+check(T.auctionScan==nil and T.auctionResult=="Stopped: 2 prices kept" and T.prices[2318].c==10 and T.prices[2934].c==10,"stopped full scan keeps the rows it had read")
 event("AUCTION_HOUSE_CLOSED")
 check(forbidden==0,"no bid, buyout, post or cancel call was ever made")
 print("PASS: "..checks.." auction capture, scan queue, cascade, profit, bag value and interop checks")

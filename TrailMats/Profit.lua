@@ -98,11 +98,11 @@ end
 function T.ProfitDetail(p)
     local lines,mats={},{}
     for _,m in ipairs(p.mats) do
-        mats[#mats+1]=m.qty.." "..T.ItemName(m.item)..(m.unit and (" at "..T.Money(math.ceil(m.unit)).." ("..m.label..")") or " (price needed)")
+        mats[#mats+1]=m.qty.." "..T.ItemName(m.item)..(m.unit and (" at "..T.Money(T.DisplayCopper(m.unit)).." ("..m.label..")") or " (price needed)")
     end
     lines[#lines+1]=(#p.missing>0 and "Known cost so far " or "Cost ")..T.Money(p.cost).." per craft: "..table.concat(mats,", ")..". Full replacement cost, even for materials in your bags."
     if p.ah then
-        lines[#lines+1]="Sale: "..p.n.." x "..T.ItemName(p.output).." at "..T.Money(math.floor(p.ah.copper)).." each ("..T.AuctionLabel(p.ah).."); "..
+        lines[#lines+1]="Sale: "..p.n.." x "..T.ItemName(p.output).." at "..T.Money(T.DisplayCopper(p.ah.copper)).." each ("..T.AuctionLabel(p.ah).."); "..
             T.Money(p.ahValue).." after the "..percent().." cut and a 1c undercut."
     end
     if p.vendorValue then lines[#lines+1]="Vendor pays "..T.Money(p.vendorValue).." for "..p.n.."."..(p.vendorBetter and " Used because it beats the auction value." or "") end
@@ -148,7 +148,7 @@ function T.SellMaterials(profession)
 end
 function T.MaterialValueDetail(m)
     local lines={"You have "..m.have.."."}
-    if m.ah then lines[#lines+1]="Auction house: "..T.Money(m.ahValue).." after the "..percent().." cut and a 1c undercut ("..T.Money(math.floor(m.ah.copper)).." each, "..T.AuctionLabel(m.ah)..")."
+    if m.ah then lines[#lines+1]="Auction house: "..T.Money(m.ahValue).." after the "..percent().." cut and a 1c undercut ("..T.Money(T.DisplayCopper(m.ah.copper)).." each, "..T.AuctionLabel(m.ah)..")."
     else lines[#lines+1]="No auction price recorded for this item." end
     if m.vendorValue then lines[#lines+1]="Vendor pays "..T.Money(m.vendorValue).." ("..T.Money(m.sell).." each)." else lines[#lines+1]="Vendor price unknown until the client loads the item." end
     if m.uses then

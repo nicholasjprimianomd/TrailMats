@@ -69,7 +69,7 @@ function T.RenderLeveling(id,row,page)
             local itemID=item
             local quote=T.saved.levelingPrices[item]
             local unit,source=T.BuyUnit(item)
-            local value=unit and (T.Money(math.ceil(unit)).." each") or "No price"
+            local value=unit and (T.Money(T.DisplayCopper(unit)).." each") or "No price"
             local detail="Enter copper per item. Blank removes your quote."
             if quote and quote.at and date then detail=detail.."\nSaved "..date("%b %d %H:%M",quote.at) end
             detail=detail.."\n"..source..(source=="Open vendor" and "; routes buy whole packs" or "")
@@ -180,9 +180,10 @@ function T.RenderHelp(row)
     row("Sell: what crafts and materials are worth.","Craft to sell ranks learned recipes by profit per craft after the auction house cut, using full replacement cost for materials. Your materials values held items at the auction house and at a vendor next to their keep limits. Prices are asking prices, not sales; recipes with missing prices say so. Nothing is posted, bought or marked safe to sell.")
     row("Scan prices at the auction house.","Open the auction house and click TrailMats: Scan prices below the frame; Full scan appears when the client allows one. Prices are also recorded while you browse. They expire after 14 days and are shared by your characters of one faction. Set the auction house cut under Options.")
     row("Sources come from the database.","QuestieDB and profession references supply locations without waiting for personal loot. Some records retain Classic references. No listed source means the data has no match here, not proof of absence.")
-    row("All counts use bags only.","Bank, mail and other characters are excluded. Fishing and Skinning share material goals with Cooking and Leatherworking when those professions are learned. Nothing is bought or crafted automatically.")
+    row("All twelve professions, one tab each.","Reviewed plans cover Leatherworking, Cooking, First Aid, Alchemy, Blacksmithing, Enchanting, Engineering and Tailoring to skill 225. Skinning, Herbalism, Mining and Fishing follow their crafting partner's plan (Leatherworking, Alchemy, Blacksmithing, Cooking) and show where to gather at your skill; herb and vein tooltips show the skill they need.")
+    row("All counts use bags only.","Bank, mail and other characters are excluded. Gathering tabs share material goals with their crafting partner when it is learned. Nothing is bought or crafted automatically.")
     row("Notices: when to craft, switch and train.","Crafting notices tell you when your bags cover the whole target for the current recipe, and when a skill-up means it is time to switch recipes. Training reminders appear once per login at your trained cap. Turn each off under Options.")
     row("Options: minimap button, notices, scale.","Open with the Options button, /tm options, or the game's AddOns settings. Settings are shared by all your characters. Escape closes this window. Key bindings are under Key Bindings > AddOns.")
     row("Commands", "/tm: open or close\n/tm now, /tm keep, /tm mats, /tm sell: change view\n/tm track: toggle tracker for selected profession\n/tm options: settings\n/tm minimap: show or hide the minimap button\n/tm refresh: update recipes and sources\n/tm quiet: zone notices\n/tm tips: item and creature tooltips\n/tm auto: reset destination and recipe choices\n/tm status: version and database status")
-    row("Version "..T.version, "WoW Forever. Supported professions: Leatherworking, Cooking, First Aid, Skinning and Fishing. Guide coverage and live recipe availability can differ during the beta.")
+    row("Version "..T.version, "WoW Forever. All twelve professions are detected; routes come from beta-tested guides and stop at 225. Guide coverage and live recipe availability can differ as the game changes.")
 end
