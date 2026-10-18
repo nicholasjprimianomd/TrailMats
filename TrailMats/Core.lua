@@ -1,6 +1,6 @@
 local addon,T=...
 _G.TrailMats=T
-T.version="0.11.0"
+T.version="0.12.0"
 local frame=CreateFrame("Frame")
 T.eventFrame=frame
 local pending,scanPending,announcePending=false,false,false

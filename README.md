@@ -1,10 +1,10 @@
-# TrailMats 0.11.0
+# TrailMats 0.12.0
 
 What to craft, gather and keep while leveling in WoW Forever.
 
 ## Install
 
-Download [TrailMats-0.11.0.zip](https://github.com/nicholasjprimianomd/TrailMats/releases/tag/v0.11.0). Extract the `TrailMats` folder into `Interface/AddOns`, restart WoW, then type `/tm`. Keep Questie and QuestieDB installed separately for source references. Existing character settings are preserved.
+Download [TrailMats-0.12.0.zip](https://github.com/nicholasjprimianomd/TrailMats/releases/tag/v0.12.0). Extract the `TrailMats` folder into `Interface/AddOns`, restart WoW, then type `/tm`. Keep Questie and QuestieDB installed separately for source references. Existing character settings are preserved.
 
 Only the inner `TrailMats` folder belongs in AddOns. TrailMats never buys or crafts automatically.
 
@@ -134,6 +134,6 @@ python tests/real_database.py "/path/to/World of Warcraft/_classic_beta_/Interfa
 python tests/materials_database.py "/path/to/World of Warcraft/_classic_beta_/Interface/AddOns"
 ```
 
-Automated checks pass for 0.11.0. In-game appearance and interaction still need a live visual check.
+Automated checks pass for 0.12.0. In-game appearance and interaction still need a live visual check.
 
 Version 0.5.0 was imported from the updated Drive bundle on October 6, 2026. Original 0.3.0 source is retained in Git history; the 0.4.0 and 0.5.0 changes arrived together.

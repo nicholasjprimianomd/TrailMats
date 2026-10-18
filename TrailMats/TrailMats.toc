@@ -2,7 +2,7 @@
 ## Title: TrailMats
 ## Notes: What to craft, gather and keep while leveling.
 ## Author: Nick
-## Version: 0.11.0
+## Version: 0.12.0
 ## IconTexture: Interface\Icons\INV_Misc_Bag_10
 ## Category: Professions
 ## OptionalDeps: QuestieDB, Questie
