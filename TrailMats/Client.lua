@@ -79,6 +79,39 @@ function T.ScanRecipes()
     local c=C_TradeSkillUI
     if safe(IsTradeSkillLinked) or safe(IsTradeSkillGuild) or
         safe(c and c.IsTradeSkillLinked) or safe(c and c.IsTradeSkillGuild) then return end
+    -- Enchanting opens the separate Craft window in this client (Blizzard_CraftUI_Vanilla);
+    -- enchants have no output item, so their link is an enchant link.
+    if GetNumCrafts and GetCraftInfo and GetCraftDisplaySkillLine and (safe(GetNumCrafts) or 0)>0 then
+        local name,rank=GetCraftDisplaySkillLine()
+        local profession
+        for id,s in pairs(T.skills or {}) do if s.name==name then profession=id end end
+        if profession then
+            T.lastScanned=profession
+            local scanned=0
+            for i=1,GetNumCrafts() do
+                local craftName,_,difficulty=GetCraftInfo(i)
+                if craftName and difficulty~="header" then
+                    local link=safe(GetCraftItemLink,i)
+                    local id=link and tonumber(link:match("enchant:(%d+)") or link:match("spell:(%d+)"))
+                    id=id or ("live:"..profession..":"..craftName)
+                    local mats,complete={},true
+                    for j=1,(safe(GetCraftNumReagents,i) or 0) do
+                        local _,_,required=safe(GetCraftReagentInfo,i,j)
+                        local reagent=safe(GetCraftReagentItemLink,i,j)
+                        local item=reagent and tonumber(reagent:match("item:(%d+)"))
+                        if item and required then mats[item]=required else complete=false end
+                    end
+                    if complete then
+                        storeRecipe(id,profession,craftName,mats,difficulty,rank);scanned=scanned+1
+                        local record=T.saved.recipes[id];local output=link and tonumber(link:match("item:(%d+)"))
+                        if record and output then record.outputItem=output;record.outputCount=1 end
+                    end
+                end
+            end
+            if scanned>0 then T.saved.scanned[profession]=true end
+            return
+        end
+    end
     if GetTradeSkillLine and GetNumTradeSkills and GetTradeSkillInfo then
         local name,rank=GetTradeSkillLine()
         local profession

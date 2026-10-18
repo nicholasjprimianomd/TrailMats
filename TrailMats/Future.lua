@@ -9,9 +9,8 @@ T.vendor[2321]=true
 T.fish[6308]=true
 
 function T.FutureProfession(id)
-    if id==356 then return 185 end
-    if id==393 then return 165 end
-    return id
+    local info=T.professions[id]
+    return info and info.pair or id
 end
 
 local function better(a,b)
@@ -151,7 +150,7 @@ function T.BuildFuture()
             if expanded[item] or depth>4 then return end
             expanded[item]=true
             local use=rows[item];local key=T.levelingConversions[item]
-            if not use or not key or profession~=165 then return end
+            if not use or not key or T.levelingRecipes[key].profession~=profession then return end
             local r=T.LevelingRecipe(T.levelingRecipes[key])
             local crafts=math.ceil(use.material.missing/r.output[2])
             for input,qty in pairs(r.mats) do

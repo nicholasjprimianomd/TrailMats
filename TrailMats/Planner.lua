@@ -1,5 +1,4 @@
 local _, T = ...
-T.tabOrder={165,393,356,185,129}
 T.destinations={148,331,406,17,40,38,0}
 T.destinationNames={[148]="Darkshore",[331]="Ashenvale",[406]="Stonetalon Mountains",[17]="The Barrens",[40]="Westfall",[38]="Loch Modan",[0]="Other / not set"}
 T.defaultDestinations={[141]=148,[148]=331}

@@ -38,9 +38,13 @@ function T.RenderLeveling(id,row,page)
         not p.gathering and not p.complete and not p.unsupported and not p.blocked and (page=="recipes" and "Materials" or "Recipes") or nil,
         not p.gathering and not p.complete and not p.unsupported and not p.blocked and function() switch(page=="recipes" and "materials" or "recipes") end or nil)
     if p.complete then row("Skill 300 reached.");return end
+    if p.noRoute then
+        row("No reviewed route for "..T.professions[id].name.." yet.","Next step and Materials still work from your learned recipes and bags. Craft counts need reviewed guide data; see SOURCES.md.")
+        return
+    end
     if p.gathering then
-        row(id==356 and "Fish while you quest." or "Skin beasts while you quest.")
-        local companion=id==356 and 185 or 165
+        local companion=T.FutureProfession(id)
+        row(T.professions[id].verb.." while you quest.")
         row("Materials: "..T.professions[companion].name,
             "Gathering needs no crafting shopping list. Next step and the tracker show materials for your paired crafting profession, if learned.",
             T.skills[companion] and "Open" or nil,T.skills[companion] and function() T.SelectProfession(companion);switch("materials") end or nil)

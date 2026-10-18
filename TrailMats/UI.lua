@@ -4,6 +4,7 @@ local muted="|cffb6c2cc"
 local green="|cff88d99d"
 local width=456
 local tabWidths={[165]=128,[393]=82,[356]=76,[185]=80,[129]=86}
+local function tabWidth(id) return tabWidths[id] or math.max(60,16+8*#T.professions[id].name) end
 -- Row colours by what the player must do: the accent strip, the action line and the bar share one.
 local states={collect={0.36,0.72,0.59},buy={1,0.82,0.5},prepare={0.95,0.62,0.35},ready={0.53,0.85,0.62},keep={0.56,0.65,0.73}}
 local function tint(c) return string.format("|cff%02x%02x%02x",math.floor(c[1]*255+0.5),math.floor(c[2]*255+0.5),math.floor(c[3]*255+0.5)) end
@@ -58,7 +59,7 @@ function T.CreateWindow()
     f.tabs={}
     for _,id in ipairs(T.tabOrder) do
         local prof=id
-        f.tabs[id]=button(f,T.professions[id].name,tabWidths[id],function() T.SelectProfession(prof) end)
+        f.tabs[id]=button(f,T.professions[id].name,tabWidth(id),function() T.SelectProfession(prof) end)
     end
     f.overview=button(f,"Next step",94,function() T.saved.view="overview";T.Render() end)
     f.keep=button(f,"Materials",94,function() T.saved.view="keep";T.Render() end)
@@ -150,7 +151,7 @@ function T.Render()
     for _,id in ipairs(T.tabOrder) do
         local b=f.tabs[id]
         if T.skills[id] then
-            local w=tabWidths[id]
+            local w=tabWidth(id)
             if x+w>484 then x=0;y=y+29 end
             b:ClearAllPoints();b:SetPoint("TOPLEFT",18+x,-y)
             b:SetText((id==selected and gold or "")..T.professions[id].name..(id==selected and "|r" or ""))

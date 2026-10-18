@@ -180,7 +180,7 @@ check(#messages==before+1 and messages[#messages]:find("Ashenvale | /tm",1,true)
 C_Map=liveMap;T.zoneDB=zoneDB;event("ZONE_CHANGED")
 check(T.area==331 and #messages==before+1,"area ID arriving later is not a second notice")
 currentMap=1438;GetRealZoneText=function() return "Test zone" end;event("ZONE_CHANGED_NEW_AREA")
-for _,id in ipairs(T.tabOrder) do check(T.window.tabs[id]:IsShown(),"possessed profession has tab") end
+for _,id in ipairs(T.tabOrder) do check(T.window.tabs[id]:IsShown()==(T.skills[id]~=nil),"possessed professions have tabs, others do not") end
 T.window.tabs[129].scripts.OnClick();check(T.saved.profession==129,"tab changes selection")
 local function screen()
  local lines={}
@@ -425,7 +425,10 @@ T.ReadSkills();T.Command("track")
 
 -- Every profession fits in one tab row; detailed explanations stay on hover.
 local y=T.window.tabs[165].point[3]
-for _,id in ipairs(T.tabOrder) do check(T.window.tabs[id].point[3]==y,"profession tabs use a single row") end
+for _,id in ipairs(T.tabOrder) do
+    if T.skills[id] then check(T.window.tabs[id].point[3]==y,"profession tabs use a single row")
+    else check(not T.window.tabs[id]:IsShown(),"unlearned professions have no tab") end
+end
 local function wordCount(text) local n=0;for _ in text:gmatch("%S+") do n=n+1 end;return n end
 check(wordCount(screen())<130,"Now avoids paragraphs in the main view")
 T.window.keep.scripts.OnClick();check(wordCount(screen())<180,"Keep shows concise rows")

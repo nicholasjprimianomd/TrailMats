@@ -138,10 +138,10 @@ function T.NextAction(id)
         if needs.here[1] then return {text="Gather "..T.ItemName(needs.here[1].item),detail="For "..needs.recipe.." to skill "..needs.target.." (estimated). Check the recipe in your profession window before crafting."} end
         return {text="Check your next recipe",detail="No learned orange/yellow recipe has a reviewed target and available materials here. See Plan for the next recipe."}
     end
-    local companion=T.FutureProfession(id)
-    return {text=T.skills[companion] and (id==356 and "Fish for Cooking" or "Skin for Leatherworking") or
-        (id==356 and "Level Fishing" or "Level Skinning"),
-        detail=id==356 and "Collect fish for the recipe below. Catch counts vary." or "Collect leather for the recipe below. Check the corpse's Skinning requirement."}
+    local info=T.professions[id];local companion=T.FutureProfession(id)
+    local details={[356]="Collect fish for the recipe below. Catch counts vary.",[393]="Collect leather for the recipe below. Check the corpse's Skinning requirement."}
+    return {text=companion~=id and T.skills[companion] and (info.verb.." for "..T.professions[companion].name) or ("Level "..info.name),
+        detail=details[id] or ("Collect "..info.collect.." for the recipe below. Nodes need the skill shown in their tooltip.")}
 end
 
 function T.ToggleTracker()

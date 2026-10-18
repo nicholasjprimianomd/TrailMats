@@ -1,11 +1,22 @@
 local _, T = ...
+-- All twelve Forever professions by skill line id. craft: has a recipe window; gather: pairs
+-- with a crafting profession whose material plan it follows; enchant: uses the Craft API.
 T.professions = {
     [165] = {name = "Leatherworking", craft = true},
-    [185] = {name = "Cooking", craft = true},
-    [129] = {name = "First Aid", craft = true},
-    [393] = {name = "Skinning"}, [356] = {name = "Fishing"},
+    [171] = {name = "Alchemy", craft = true},
+    [164] = {name = "Blacksmithing", craft = true},
+    [202] = {name = "Engineering", craft = true},
+    [333] = {name = "Enchanting", craft = true, enchant = true},
+    [197] = {name = "Tailoring", craft = true},
+    [185] = {name = "Cooking", craft = true, secondary = true},
+    [129] = {name = "First Aid", craft = true, secondary = true},
+    [393] = {name = "Skinning", gather = true, pair = 165, verb = "Skin beasts", collect = "leather"},
+    [182] = {name = "Herbalism", gather = true, pair = 171, verb = "Gather herbs", collect = "herbs"},
+    [186] = {name = "Mining", gather = true, pair = 164, verb = "Mine ore", collect = "ore"},
+    [356] = {name = "Fishing", gather = true, pair = 185, verb = "Fish", collect = "fish", secondary = true},
 }
-T.order = {165, 185, 129, 393, 356}
+T.order = {165, 171, 164, 202, 333, 197, 185, 129, 393, 182, 186, 356}
+T.tabOrder = {165, 171, 164, 202, 333, 197, 393, 182, 186, 356, 185, 129}
 T.items = {
     [2318]="Light Leather", [2934]="Ruined Leather Scraps", [2319]="Medium Leather",
     [2589]="Linen Cloth", [2592]="Wool Cloth", [6889]="Small Egg",

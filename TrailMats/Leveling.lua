@@ -82,8 +82,9 @@ function T.EvaluateLevelingRoute(profession,route)
         local owned=math.min(amount,bags[item]);bags[item]=bags[item]-owned
         m.fromBags=m.fromBags+owned;amount=amount-owned
         local key=T.levelingConversions[item]
-        if amount>0 and key and profession==165 and depth<4 then
-            local r=T.LevelingRecipe(T.levelingRecipes[key])
+        local reference=key and T.levelingRecipes[key]
+        if amount>0 and reference and reference.profession==profession and depth<4 then
+            local r=T.LevelingRecipe(reference)
             local count=math.ceil(amount/r.output[2])
             craft(r,count,nil,nil,true,depth+1)
             generated=math.min(amount,made[item]);made[item]=made[item]-generated
@@ -121,7 +122,9 @@ function T.BuildLeveling(profession)
     if not skill then return nil end
     local target=T.NextMilestone(skill.rank)
     local plan={profession=profession,start=skill.rank,target=target,training=skill.cap<target,alternatives={},priceItems={}}
-    if not T.levelingEdges[profession] then plan.gathering=true;return plan end
+    local info=T.professions[profession] or {}
+    if info.gather then plan.gathering=true;return plan end
+    if not T.levelingEdges[profession] then plan.noRoute=true;return plan end
     if skill.rank>=300 then plan.complete=true;return plan end
     if target>T.levelingLimit then plan.unsupported=true;return plan end
     local candidates,items={},{}

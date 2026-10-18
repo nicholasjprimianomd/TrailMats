@@ -91,13 +91,13 @@ frame:SetScript("OnEvent",function(_,event,name)
     elseif event=="LOOT_READY" or event=="LOOT_OPENED" then
         if T.saved then T.Queue(false,false) end
     else
-        local scan=event=="TRADE_SKILL_SHOW" or event=="TRADE_SKILL_UPDATE" or event=="NEW_RECIPE_LEARNED" or event=="SKILL_LINES_CHANGED"
+        local scan=event=="TRADE_SKILL_SHOW" or event=="TRADE_SKILL_UPDATE" or event=="CRAFT_SHOW" or event=="CRAFT_UPDATE" or event=="NEW_RECIPE_LEARNED" or event=="SKILL_LINES_CHANGED"
         local zone=event=="ZONE_CHANGED_NEW_AREA" or event=="PLAYER_ENTERING_WORLD" or event=="ZONE_CHANGED"
-        if event=="TRADE_SKILL_SHOW" then T.followPending=true end
+        if event=="TRADE_SKILL_SHOW" or event=="CRAFT_SHOW" then T.followPending=true end
         T.Queue(scan,zone)
     end
 end)
 for _,event in ipairs({"ADDON_LOADED","PLAYER_LOGIN","PLAYER_ENTERING_WORLD","ZONE_CHANGED_NEW_AREA","ZONE_CHANGED",
-    "SKILL_LINES_CHANGED","BAG_UPDATE_DELAYED","TRADE_SKILL_SHOW","TRADE_SKILL_UPDATE","NEW_RECIPE_LEARNED","LOOT_READY","LOOT_OPENED","MERCHANT_SHOW","MERCHANT_UPDATE","MERCHANT_CLOSED"}) do
+    "SKILL_LINES_CHANGED","BAG_UPDATE_DELAYED","TRADE_SKILL_SHOW","TRADE_SKILL_UPDATE","CRAFT_SHOW","CRAFT_UPDATE","NEW_RECIPE_LEARNED","LOOT_READY","LOOT_OPENED","MERCHANT_SHOW","MERCHANT_UPDATE","MERCHANT_CLOSED"}) do
     pcall(frame.RegisterEvent,frame,event)
 end
