@@ -184,6 +184,10 @@ function T.ScanRecipes()
             if complete and next(mats) then
                 storeRecipe(id,profession,recipe.name,mats,colours[recipe.relativeDifficulty] or recipe.difficulty,skill.rank)
                 T.saved.scanned[profession]=true
+                local record=T.saved.recipes[id]
+                if record and schematic and type(schematic.outputItemID)=="number" then
+                    record.outputItem=schematic.outputItemID;record.outputCount=math.max(1,tonumber(schematic.quantityMin) or 1)
+                end
             end
         elseif recipe and recipe.learned==false then
             T.saved.recipes[id]={profession=profession,learned=false}

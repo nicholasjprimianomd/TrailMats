@@ -4,6 +4,9 @@ TrailMats is a profession companion for World of Warcraft: Forever. Counts are e
 
 ## Unreleased
 
+- All twelve Forever professions are detected and get a tab. Reviewed leveling routes added for Alchemy, Blacksmithing, Enchanting and Tailoring (to skill 225), each recipe and band cited to its Forever source; Engineering shows Next step and Materials from learned recipes until its route is reviewed.
+- Herbalism and Mining tabs follow Alchemy and Blacksmithing plans and show where to gather at your skill; hovering a herb or vein shows the skill it needs next to yours.
+- Recipe scans record each recipe's output item and count, and Enchanting is read from the Craft window on clients that use it.
 - Material rows show one coloured action line per state (collect, buy, craft first, ready, keep) over a thin have/need bar, like a quest objective. Rows are uniform cards that brighten on hover; vendor offers keep a quiet second line.
 - Packaging for CurseForge, Wago Addons and GitHub Releases: `.pkgmeta`, a tag-triggered GitHub Actions workflow, this changelog, and TOC metadata (icon, category, website, license).
 

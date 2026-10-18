@@ -3,7 +3,7 @@ local root=arg[1] or "."
 local T={saved={recipes={},scanned={},selected={},observed={},levelingPrices={}},skills={}}
 T.Refresh=function() end
 UnitFactionGroup=function() return "Alliance" end
-for _,name in ipairs({"Data","Ranges","Future","LevelingData","Leveling","Automatic","Client","Actions"}) do
+for _,name in ipairs({"Data","Ranges","Future","LevelingData","LevelingTrades","Leveling","Automatic","Client","Actions"}) do
     assert(loadfile(root.."/TrailMats/"..name..".lua"))("TrailMats",T)
 end
 local checks=0

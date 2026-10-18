@@ -6,7 +6,7 @@ T.Count=function(item) return bags[item] or 0 end
 T.Safe=function(fn,...) if type(fn)=="function" then return fn(...) end end
 T.ItemName=function(item) return T.items[item] or tostring(item) end
 UnitFactionGroup=function() return "Alliance" end
-for _,name in ipairs({"Data","Ranges","Future","LevelingData","Leveling","Automatic"}) do
+for _,name in ipairs({"Data","Ranges","Future","LevelingData","LevelingTrades","Leveling","Automatic"}) do
     assert(loadfile(root.."/TrailMats/"..name..".lua"))("TrailMats",T)
 end
 local checks=0

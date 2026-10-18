@@ -287,6 +287,9 @@ function T.Render()
             local advice=T.RangeAdvice(356,T.area)
             row("Fishing target here: "..T.fishingEfficiency[T.area].target.." including bonuses",
                 advice.text.."\n"..(advice.note or "").."\n"..(advice.detail or ""))
+        elseif T.gatherBands[selected] then
+            local advice=T.RangeAdvice(selected,0)
+            if advice then row(advice.title,advice.text.."\n"..(advice.note or "").."\n"..(advice.detail or "")) end
         end
     end
     f.content:SetHeight(math.max(1,height));T.SyncScroll(scroll)
@@ -330,9 +333,25 @@ function T.AddItemTooltip(tooltip)
     end
     if added then tooltip:Show() end
 end
+-- Herbs and veins are world objects: their tooltip is just the name, so match it against the node tables.
+function T.AddNodeTooltip(tooltip)
+    if not T.plan or not T.settings.tooltips or tooltip:GetUnit() or tooltip:GetItem() then return end
+    local first=GameTooltipTextLeft1 and GameTooltipTextLeft1:GetText()
+    local profession,required=T.NodeRequirement(first)
+    if not profession or tooltip.trailMatsNode==first then return end
+    tooltip.trailMatsNode=first
+    local s=T.skills[profession]
+    local name=T.professions[profession].name
+    if s then
+        local ok=s.rank>=required
+        tooltip:AddLine("TrailMats: "..name.." "..required.." needed; you have "..s.rank..".",ok and 0.53 or 1,ok and 0.85 or 0.5,ok and 0.62 or 0.4,true)
+    else tooltip:AddLine("TrailMats: needs "..name.." "..required..".",0.7,0.7,0.7,true) end
+    tooltip:Show()
+end
 function T.InstallTooltips()
     if not GameTooltip then return end
-    GameTooltip:HookScript("OnTooltipCleared",function(t) t.trailMatsNPC=nil;t.trailMatsItem=nil end)
+    GameTooltip:HookScript("OnTooltipCleared",function(t) t.trailMatsNPC=nil;t.trailMatsItem=nil;t.trailMatsNode=nil end)
+    GameTooltip:HookScript("OnShow",function(t) T.AddNodeTooltip(t) end)
     local unitHook=pcall(GameTooltip.HookScript,GameTooltip,"OnTooltipSetUnit",function(t) local _,unit=t:GetUnit();T.AddNPCTooltip(t,unit) end)
     local itemHook=pcall(GameTooltip.HookScript,GameTooltip,"OnTooltipSetItem",T.AddItemTooltip)
     if TooltipDataProcessor and Enum and Enum.TooltipDataType then

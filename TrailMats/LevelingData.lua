@@ -12,6 +12,7 @@ local function edge(p,lo,hi,crafts,key)
     local list=T.levelingEdges[p]
     list[#list+1]={low=lo,high=hi,crafts=crafts,recipe=T.levelingRecipes[key]}
 end
+T.DefineRecipe,T.DefineEdge=recipe,edge -- LevelingTrades.lua adds the other professions with the same helpers
 local function lw(key,name,mats,output,source) return recipe(key,165,name,mats,source,output) end
 lw("scraps","Light Leather",{[2934]=3},{2318,2})
 lw("kit","Light Armor Kit",{[2318]=1})

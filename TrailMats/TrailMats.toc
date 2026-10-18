@@ -15,6 +15,7 @@ Data.lua
 Ranges.lua
 Future.lua
 LevelingData.lua
+LevelingTrades.lua
 Leveling.lua
 Automatic.lua
 Planner.lua

@@ -66,9 +66,13 @@ The comparison minimizes estimated additional material spending among supported 
 
 It does not compare every possible recipe, within-band mixture, or buying versus crafting intermediates. Training, recipe books, farming time, resale income and the value of owned materials are excluded. Update quotes when prices change. [SOURCES.md](SOURCES.md) documents the research and assumptions.
 
+## Professions
+
+TrailMats detects every profession your character knows and shows a tab for each. Reviewed leveling plans exist for Leatherworking, Cooking, First Aid, Alchemy, Blacksmithing, Enchanting and Tailoring (through skill 225; the Forever beta could not test further). Engineering shows Next step and Materials from your learned recipes but has no reviewed route yet. Skinning, Herbalism, Mining and Fishing are gathering professions: their tabs follow the paired crafting plan (Leatherworking, Alchemy, Blacksmithing, Cooking) and show where to gather at your skill. Hovering a herb or vein shows the skill it needs next to yours.
+
 ## Limits
 
-Supported professions: Leatherworking, Skinning, Fishing, Cooking and First Aid. Counts use bags only, excluding banks, mail and other characters. English recipe names support reference matching.
+Counts use bags only, excluding banks, mail and other characters. English recipe names support reference matching.
 
 Local source coverage depends on Questie/QuestieDB and a small set of fish and skinning references. Some provider records retain Classic-derived data, as explained in Help. Database sources do not depend on this character having seen them. There are no inferred kill counts. Early departure guidance is most complete for Teldrassil to Darkshore; unknown routes remain unknown. Profession advice is not a character-level or combat-safety check.
 
@@ -101,6 +105,8 @@ lua5.1 tests/leveling.lua .
 lua5.1 tests/automatic.lua .
 lua5.1 tests/flow.lua .
 lua5.1 tests/sources.lua .
+lua5.1 tests/professions.lua .
+lua5.1 tests/trades.lua .
 ```
 
 The simulated game tests cover navigation, price editing, tracker updates while the main window is closed, profession and zone changes, empty-bag checklists, database fallback, local vendors, caps, recipe freshness, material counts, vendor packs and stock. The planner checks every starting skill from 1 through 224 for all three crafting professions, including ingredient accounting, intermediate production and incomplete prices.

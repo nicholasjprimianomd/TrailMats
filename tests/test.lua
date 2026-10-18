@@ -278,6 +278,15 @@ T.SelectProfession(393);GameTooltip.lines={};T.AddNPCTooltip(GameTooltip,"mouseo
 check(table.concat(GameTooltip.lines," "):find("corpse's actual Skinning",1,true),"Skinning tab has cautious creature hints")
 T.SelectProfession(129);GameTooltip.lines={};T.AddNPCTooltip(GameTooltip,"mouseover")
 check(#GameTooltip.lines==0,"other profession materials not injected")
+-- Herb and vein tooltips name the gathering skill they need; nothing is added for other objects or without the skill.
+local unitOf=GameTooltip.GetUnit;GameTooltip.GetUnit=function() end;GameTooltip.GetItem=function() end
+T.skills[182]={name="Herbalism",rank=50,cap=75};GameTooltipTextLeft1.text="Briarthorn";GameTooltip.lines={};GameTooltip.trailMatsNode=nil
+T.AddNodeTooltip(GameTooltip);check(GameTooltip.lines[1]=="TrailMats: Herbalism 70 needed; you have 50.","herb node tooltip compares the requirement with your skill")
+GameTooltipTextLeft1.text="Ooze Covered Silver Vein";GameTooltip.lines={};T.AddNodeTooltip(GameTooltip)
+check(GameTooltip.lines[1]=="TrailMats: needs Mining 75.","vein tooltip still names the skill when you lack the profession")
+GameTooltipTextLeft1.text="Mailbox";GameTooltip.lines={};T.AddNodeTooltip(GameTooltip);check(#GameTooltip.lines==0,"other objects get no node line")
+GameTooltipTextLeft1.text="Briarthorn";GameTooltip.lines={};T.AddNodeTooltip(GameTooltip);T.AddNodeTooltip(GameTooltip);check(#GameTooltip.lines==1,"node line is not duplicated")
+T.skills[182]=nil;GameTooltip.GetUnit=unitOf;GameTooltip.GetItem=nil;GameTooltipTextLeft1.text=nil
 T.SelectProfession(165);inventory[2318]=99;event("BAG_UPDATE_DELAYED")
 check(T.CurrentOpportunity().materials[1].missing==0,"no negative remaining count")
 T.ScrollBy(100000);check(T.window.scroll:GetVerticalScroll()==math.max(0,T.window.content:GetHeight()-T.window.scroll:GetHeight()),"scroll bounded below")
