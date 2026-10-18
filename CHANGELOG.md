@@ -2,7 +2,7 @@
 
 TrailMats is a profession companion for World of Warcraft: Forever. Counts are estimates; nothing is bought, crafted or trained automatically. Dates are tag dates. Downloads: https://github.com/nicholasjprimianomd/TrailMats/releases
 
-## Unreleased
+## 0.12.0 (2026-10-18)
 
 - All twelve Forever professions are detected and get a tab. Reviewed leveling routes added for Alchemy, Blacksmithing, Enchanting, Engineering and Tailoring (to skill 225), each recipe and band cited to its Forever source.
 - Herbalism and Mining tabs follow Alchemy and Blacksmithing plans and show where to gather at your skill; hovering a herb or vein shows the skill it needs next to yours.

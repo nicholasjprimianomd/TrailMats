@@ -11,10 +11,7 @@ for _,p in ipairs({171,164,333,197,202}) do T.levelingEdges[p]=T.levelingEdges[p
 -- Alchemy (171) leveling data for TrailMats, researched 2026-10-17/18 against the Forever beta.
 -- Guide (bands, craft counts, alternatives, vendors): https://www.wow-professions.com/forever/alchemy-leveling-guide
 -- Reagents and item ids: each recipe line cites its wowhead.com/forever spell page; item ids were cross-read from the
--- Listview data of https://www.wowhead.com/forever/spells/professions/alchemy (raw/wowhead-forever-alchemy-listview-2026-10-17.tsv).
--- Orchestrator: add [171]={} to T.levelingEdges and 171 to T.professions/T.order before these lines, and let
--- T.EvaluateLevelingRoute apply T.levelingConversions for 171 (Leveling.lua currently gates them on profession==165):
--- Fire Oil and Stonescale Oil are crafted intermediates here.
+-- Listview data of https://www.wowhead.com/forever/spells/professions/alchemy.
 -- Forever moved the six Healing Potions to First Aid (guide; https://www.warcrafttavern.com/forever/guides/alchemy/;
 -- https://www.icy-veins.com/wow-forever/news/healing-potions-now-crafted-by-first-aid-in-wow-forever/), so the
 -- Classic 1-10 and 290-300 healing-potion steps are replaced by Minor Arcane Elixir / Elixir of Minor Force and Major Frenzy Potion.
@@ -84,7 +81,6 @@ for id,name in pairs(names) do T.items[id]=name end
 --   Wowhead's Forever tooltip data (https://nether.wowhead.com/tooltip/spell/<id>?dataEnv=16&locale=0) on 2026-10-18.
 -- Trainer source and colour thresholds: https://seemeta.com/en/wow-forever/professions/blacksmithing (game version 1.60.1 beta, updated 2026-10-17).
 --   Forever spell pages and tooltips carry no "Requires Blacksmithing" line and no trainer list, so learn levels rest on seemeta alone.
--- Orchestrator: add [164]={} to the T.levelingEdges initializer before these lines. Conversions and supplies are delivered separately.
 -- Bars are Mining smelts and are treated as gathered raw materials. Blacksmith Hammer (item 5956) is a tool, not a reagent.
 -- Output counts: Forever tooltips print "(2)" after every created item, armor included, where Classic tooltips print nothing, so that
 --   figure is not a yield. The guide's arithmetic is one stone per craft (30 crafts = 30 Rough Grinding Stone, 16 kept for 8 gauntlets x2,
@@ -144,7 +140,6 @@ for id,name in pairs(names) do T.items[id]=name end
 -- Bands and craft counts: https://www.wow-professions.com/forever/enchanting-leveling-guide (beta route; the 225-300 section is marked "not tested yet" there).
 -- Reagents and item ids: each recipe's https://www.wowhead.com/forever/spell=<id> page, read 2026-10-18 (ids in the trailing comments). Second source for the route: https://thewowdb.com/wow-forever/guides/professions/enchanting/ and https://seemeta.com/en/wow-forever/professions/enchanting (beta 1.60.1 recipe dump, updated 2026-10-17).
 -- Bands are planning intervals, not exact learning requirements or color tables.
--- Orchestrator: add [333]={} to the T.levelingEdges initializer in LevelingData.lua before these edge() lines run.
 
 -- Apprentice 1-70 (capital or starting-zone trainer; no level requirement)
 recipe("en-copper-rod",333,"Runed Copper Rod",{[6217]=1,[247786]=1},"Trainer",{6218,1}) -- spell 7421: Copper Rod 6217 x1, Mote of Magic 247786 x1 -> Runed Copper Rod 6218 (Forever: no Strange Dust/essence); same tuple on the guide and seemeta; https://www.wowhead.com/forever/spell=7421
@@ -170,7 +165,7 @@ recipe("en-cloak-gdef",333,"Enchant Cloak - Greater Defense",{[11137]=1},"Expert
 -- Artisan 225-300 (Annora, Uldaman, Badlands; needs skill 200, level 35; guide section untested in beta)
 recipe("en-gloves-agi",333,"Enchant Gloves - Agility",{[11137]=1},"Expert or Artisan trainer") -- spell 13815: Vision Dust x1; Classic teaches it at 220 from Hgarth, Kitta Firewind and Annora; Forever trainer lists not published, unconfirmed; https://www.wowhead.com/forever/spell=13815
 recipe("en-boots-stam",333,"Enchant Boots - Stamina",{[11137]=2},"Expert or Artisan trainer") -- spell 13836: Vision Dust x2; Classic teaches it at 225 from Hgarth, Kitta Firewind and Annora; Forever trainer lists not published, unconfirmed; https://www.wowhead.com/forever/spell=13836
-recipe("en-chest-sup-stam",333,"Enchant Chest - Superior Stamina",{[11137]=3},"Artisan trainer") -- spell 13858 (Classic id of Enchant Chest - Superior Health, Annora at 230; Forever name Superior Stamina): Vision Dust x3; https://www.wowhead.com/forever/spell=13858
+recipe("en-chest-sup-stam",333,"Enchant Chest - Superior Stamina",{[11137]=3},"Expert or Artisan trainer; unconfirmed") -- spell 13858 (Classic id of Enchant Chest - Superior Health, Annora at 230; Forever name Superior Stamina): Vision Dust x3; https://www.wowhead.com/forever/spell=13858
 recipe("en-lesser-mana-oil",333,"Lesser Mana Oil",{[11176]=1,[8831]=1,[8925]=1},"Vendor formula: Kania (Cenarion Hold inn, Silithus)",{20747,1}) -- spell 25127: Dream Dust 11176 x1, Purple Lotus 8831 x1, Crystal Vial 8925 x1 -> Lesser Mana Oil 20747; formula item 20754 sold in Silithus (and listed for Blackrock Depths); https://www.wowhead.com/forever/spell=25127 https://www.wowhead.com/forever/item=20754
 recipe("en-bracer-gstr",333,"Enchant Bracer - Greater Strength",{[11176]=1,[11174]=2},"Artisan trainer") -- spell 13939: Dream Dust x1, Lesser Nether Essence 11174 x2; guide and TheWoWDB list it in Annora's table at 240; https://www.wowhead.com/forever/spell=13939
 recipe("en-shield-gstam",333,"Enchant Shield - Greater Stamina",{[11176]=6},"Vendor formula: Daniel Bartlett (Undercity), Mythrin'dir (Darnassus); binds on pickup") -- spell 20017: Dream Dust x6; formula item 16217 sold in Undercity and Darnassus (both factions); BoP per guide and TheWoWDB, not shown on the item page; https://www.wowhead.com/forever/spell=20017 https://www.wowhead.com/forever/item=16217
@@ -259,13 +254,12 @@ for id,name in pairs(names) do T.items[id]=name end
 -- ===== Engineering (202) =====
 -- Engineering (skill line 202) leveling data for TrailMats, researched 2026-10-17/18 against the Forever beta (client 1.60.1).
 -- Bands, craft counts, alternatives, keep notes and schematic vendors: https://www.wow-professions.com/forever/engineering-leveling-guide
---   (re-read 2026-10-18, unchanged since the 2026-10-17 copy in scratchpad guide.txt). The author walked 1-215 on the beta: "the beta
+--   (re-read 2026-10-18). The author walked 1-215 on the beta: "the beta
 --   stops at 225 right now" and "The route after 225 is not tested yet"; 215-300 is the Classic route carried over unchanged, kept here
 --   because the guide publishes it. Shopping list 1-225 / 225-300 totals are reproduced by the edges below.
 -- Reagents and item ids: each recipe cites its https://www.wowhead.com/forever/spell=<id> page (all 28 read 2026-10-18; the page markdown
 --   inlines the reagent tree of sub-recipes, e.g. Smelt Copper under Copper Bar, which is not part of the recipe) and the same reagents were
---   re-read from Wowhead's Forever tooltip data (https://nether.wowhead.com/tooltip/spell/<id>?dataEnv=16&locale=0, cached in scratchpad
---   tt/ and parsed2.json). Forever spell pages carry no "Requires Engineering" line and no trainer list; the tooltips do carry the former.
+--   re-read from Wowhead's Forever tooltip data (https://nether.wowhead.com/tooltip/spell/<id>?dataEnv=16&locale=0). Forever spell pages carry no "Requires Engineering" line and no trainer list; the tooltips do carry the former.
 -- Learn levels, colours and trainer source: https://seemeta.com/en/wow-forever/professions/engineering (game version 1.60.1 beta, updated
 --   2026-10-17): "No recipe item, usually learned from a trainer" unless noted. Its colour digits print without separators, so a split
 --   marked "(split)" follows the row structure and the Classic pattern. https://thewowdb.com/wow-forever/guides/professions/engineering/
@@ -279,7 +273,6 @@ for id,name in pairs(names) do T.items[id]=name end
 --   (6219) and Gyromatic Micro-Adjustor (10498) are tools, not reagents; the two crafted tools are one-craft edges because the guide levels
 --   through them. Weak Flux (2880) is the only vendor supply consumed on this route (Wooden Stock 4399 / Heavy Stock 4400 are gun parts
 --   no route recipe uses). The Gnome racial no longer gives +15 Engineering in Forever (guide), so no race adjustment applies.
--- Orchestrator: add [202]={} to the T.levelingEdges initializer before these lines. Conversions and supplies are delivered separately.
 -- Apprentice (guide heading 1-50; any Engineering trainer, no level requirement in Forever; Journeyman needs skill 50 and level 10)
 recipe("eg-rough-powder",202,"Rough Blasting Powder",{[2835]=1},"Trainer",{4357,1}) -- https://www.wowhead.com/forever/spell=3918/rough-blasting-powder : Rough Stone 2835 x1 -> 4357; seemeta: learned automatically with the profession rank, orange 1 / yellow 20 / green 30 / grey 40 (thewowdb 2026-10-17: yellow 20, grey 40); guide: keep all 60 for the bombs at 51
 recipe("eg-copper-bolts",202,"Handful of Copper Bolts",{[2840]=1},"Trainer",{4359,1}) -- https://www.wowhead.com/forever/spell=3922/handful-of-copper-bolts : Copper Bar 2840 x1 -> 4359; tool Blacksmith Hammer; seemeta (split): trainer, yellow 45 / green 53 / grey 60; guide: keep all 30 for the bombs
