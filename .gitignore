@@ -10,3 +10,4 @@ WTF/
 SavedVariables/
 .DS_Store
 .release/
+.claude/
