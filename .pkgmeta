@@ -1,0 +1,27 @@
+# BigWigs packager metadata (https://github.com/BigWigsMods/packager).
+# The addon's TOC and Lua live in the TrailMats/ subfolder of this repository, so the
+# package name is set explicitly and that subfolder is moved up to the package root.
+# Result: a flat TrailMats/ folder with TrailMats.toc, the Lua/XML files, README.md,
+# LICENSE, SOURCES.md and CHANGELOG.md.
+package-as: TrailMats
+
+move-folders:
+  TrailMats/TrailMats: TrailMats
+
+# Working-copy paths. Dot-files (.gitignore, .github, .pkgmeta) are always excluded.
+ignore:
+  - tests
+  - backups
+  - publishing
+  - installation-manifest.json
+
+# Use the hand-written changelog; the generated one copies commit bodies into the
+# public release text.
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
+
+# CurseForge relation (project slug). QuestieDB ships inside Questie's package.
+# Nothing is embedded; this only shows a link on the project page.
+optional-dependencies:
+  - questie

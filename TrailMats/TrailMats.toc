@@ -3,9 +3,13 @@
 ## Notes: What to craft, gather and keep while leveling.
 ## Author: Nick
 ## Version: 0.11.0
+## IconTexture: Interface\Icons\INV_Misc_Bag_10
+## Category: Professions
 ## OptionalDeps: QuestieDB, Questie
 ## SavedVariables: TrailMatsSettings
 ## SavedVariablesPerCharacter: TrailMatsDB
+## X-Website: https://github.com/nicholasjprimianomd/TrailMats
+## X-License: MIT
 
 Data.lua
 Ranges.lua

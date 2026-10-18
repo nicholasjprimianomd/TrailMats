@@ -1,0 +1,48 @@
+# Packages TrailMats with the BigWigs packager and uploads the result to CurseForge,
+# Wago Addons and GitHub Releases whenever a version tag is pushed, e.g.
+#   git tag -a v0.12.0 -m "TrailMats 0.12.0" && git push origin v0.12.0
+# A tag containing "beta" or "alpha" is uploaded with that release type; any other tag is a release.
+# Docs: https://github.com/BigWigsMods/packager
+#       https://github.com/BigWigsMods/packager/wiki/GitHub-Actions-workflow
+#
+# Repository secrets to create (Settings > Secrets and variables > Actions):
+#   CF_API_KEY       CurseForge API token  https://authors.curseforge.com/#/settings/api-tokens
+#   WAGO_API_TOKEN   Wago Addons API key   https://addons.wago.io/account/apikeys
+#   WOWI_API_TOKEN   WoWInterface token    https://www.wowinterface.com/downloads/filecpl.php?action=apitokens
+#                    (leave unset and keep X-WoWI-ID out of the TOC until WoWInterface lists Forever)
+# GITHUB_TOKEN is provided automatically; it needs the write permission declared below.
+# Any upload whose token or TOC project ID is missing is skipped, so secrets can be added over time.
+
+name: Package and release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# Required so the packager can create the GitHub release with GITHUB_TOKEN.
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      # release.sh reads CF_API_TOKEN and GH_API_TOKEN; the older names CF_API_KEY and
+      # GITHUB_OAUTH still work but are marked deprecated.
+      CF_API_TOKEN: ${{ secrets.CF_API_KEY }}
+      WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+      WOWI_API_TOKEN: ${{ secrets.WOWI_API_TOKEN }}
+      GH_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Clone project
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0   # full history and tags; the packager needs the previous tag
+
+      - name: Package and release
+        uses: BigWigsMods/packager@v2
+        # Defaults produce TrailMats-v0.12.0-forever.zip with upload label v0.12.0-forever.
+        # To drop the "-forever" suffix from the file name, uncomment:
+        # with:
+        #   args: -n "{package-name}-{project-version}"
