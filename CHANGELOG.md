@@ -4,6 +4,10 @@ TrailMats is a profession companion for World of Warcraft: Forever. Counts are e
 
 ## Unreleased
 
+- Auction house prices: the lowest unit buyout of every page you browse is recorded, and a **TrailMats: Scan prices** button under the auction house frame scans the house (a full browse on this client; exact-name searches on the older auction API). **Full scan** appears when the client allows a complete replicate, with a countdown. Prices are shared per faction across your characters, expire after 14 days, and Auctionator or TSM prices are used only when fresher. TrailMats still never bids, buys or posts.
+- New **Sell** view (`/tm sell`): **Craft to sell** ranks learned recipes by profit per craft after the auction house cut using full replacement cost of materials, with "needs N prices" for incomplete rows, vendor-only values for bind-on-pickup outputs and a thin-market flag; **Your materials** values held materials at the auction house and at a vendor next to their keep limits, with a `>=` total while anything is unpriced.
+- Prices page rows show their source and age (your quote, open vendor, or AH with age); route costs fall through quote > vendor > auction house, taking the cheaper of vendor and auction house for vendor supplies. Item tooltips show the auction price and the stack's value after the cut.
+- Options: auction house cut (0-20%, default 5%), neutral auction house (15%), and recording prices while browsing. Opening the auction house in Tanaris, Stranglethorn Vale or Winterspring uses the neutral cut for the session.
 - Material rows show one coloured action line per state (collect, buy, craft first, ready, keep) over a thin have/need bar, like a quest objective. Rows are uniform cards that brighten on hover; vendor offers keep a quiet second line.
 - Packaging for CurseForge, Wago Addons and GitHub Releases: `.pkgmeta`, a tag-triggered GitHub Actions workflow, this changelog, and TOC metadata (icon, category, website, license).
 

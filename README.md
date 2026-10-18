@@ -17,6 +17,7 @@ Choose the profession you want to level. **Next step** shows what to farm for on
 | **Next step** | One recipe at a time: Collect, Buy, Craft first, or Ready, with a named source and skill target. |
 | **Materials** | What to collect for the next recipe, including empty-bag ingredients, named sources in your current zone, and held materials to save for later. |
 | **Plan** | Missing materials to the next 75, 150 or 225 skill milestone. **Show all** includes covered ingredients. |
+| **Sell** | Profit per craft for learned recipes and the value of held materials, from recorded auction house prices. |
 
 **Recipes** inside Plan shows the crafting order and recipe availability. **Prices** lets you compare material costs. Hover rows for source locations, ingredient breakdowns and explanations. **Help** keeps the longer guidance off the main screens.
 
@@ -60,11 +61,26 @@ Materials include vendor supplies and intermediate recipes. **Collect** or **Buy
 
 Counts are guide-based estimates. Stop a recipe when its target skill is reached; skill-ups are not guaranteed. Check recipe availability before following a plan. There is no batch or recipe-cycle control. Next step selects a suitable learned recipe automatically. Stop at the displayed skill or when it turns green, whichever comes first.
 
-Under **Prices**, click **Edit** and enter copper per item (100 copper = 1 silver). Blank clears a quote; zero explicitly means free. Quotes are saved per character and dated in the tooltip. There is no automatic Auction House scan. Open-vendor prices supply missing quotes for basic supplies, respecting packs and available stock.
+Under **Prices**, click **Edit** and enter copper per item (100 copper = 1 silver). Blank clears a quote; zero explicitly means free. Quotes are saved per character and dated in the tooltip. Each row names its source: your quote, the open vendor, or the auction house with the age of that price. Open-vendor prices supply missing quotes for basic supplies, respecting packs and available stock; recorded auction prices fill the rest (see below).
 
 The comparison minimizes estimated additional material spending among supported recipe combinations. Bags reduce purchases. Unknown prices are never treated as zero; incomplete comparisons stay labeled. Without a completely priced route, the planner favors routes with a greater fraction of raw materials already covered.
 
 It does not compare every possible recipe, within-band mixture, or buying versus crafting intermediates. Training, recipe books, farming time, resale income and the value of owned materials are excluded. Update quotes when prices change. [SOURCES.md](SOURCES.md) documents the research and assumptions.
+
+## Auction house prices and selling
+
+TrailMats reads the auction house; it never bids, buys, posts or cancels anything. Prices are recorded in two ways:
+
+- **While browsing.** Every page of results you view is read for the lowest unit buyout per item (buyout divided by stack size; bid-only listings are ignored). Turn this off under Options with **Record prices while browsing**.
+- **Scan prices.** A **TrailMats: Scan prices** button sits under the auction house frame, right of its tabs. On this client it runs one full browse of the auction house, paced by the game's own throttle; on clients with the older auction API it searches each item TrailMats cares about by exact name, up to four pages per item. Click again to stop and keep what was captured. **Full scan** appears when the client allows a complete replicate of the auction list; it shows a countdown until the next one is allowed.
+
+Prices are shared by all your characters of one faction (Forever has no realms) and expire after 14 days. A lower price replaces a stored one at once; a higher price only after ten minutes, so one cheap listing does not vanish behind the next page. When Auctionator or TradeSkillMaster is installed, their price for an item is used only when it is fresher than TrailMats' own, and the source label says so. A price of zero or an unknown price is never treated as free.
+
+The price cascade everywhere is: your quote, then the open vendor, then the auction house, then **Price needed**. Vendor supplies take the cheaper of the vendor and the auction house when both are known, and the vendor alone when the auction house is unknown. Item tooltips show the auction price per unit with its age and, for a stack in your bags, the stack's value after the cut.
+
+**Sell** has two lists per profession. **Craft to sell** ranks learned recipes by profit per craft: the output's lowest auction price minus one copper, after the auction house cut, times the recipe's yield, minus the full replacement cost of every material, even those already in your bags. Recipes with any missing price say **needs N prices** and sort last; outputs that bind when picked up are valued at a vendor only; markets with fewer than three listings are flagged thin. **Your materials** values held raw materials at the auction house after the cut and at a vendor, next to the keep limits from the leveling plan. Totals carry a **>=** prefix while anything is unpriced. These are asking prices, not sales, and nothing is ever labelled safe to sell because of its value.
+
+The cut is 5% by default and adjustable under Options (**Auction house cut**). **Neutral auction house (15% cut)** sets the neutral rate; opening the auction house in Tanaris, Stranglethorn Vale or Winterspring also applies it for the session. Both figures are the published rates and have not been measured on Forever.
 
 ## Limits
 
@@ -78,13 +94,13 @@ The compact tracker and hover-first layout take inspiration from [Questie](https
 
 A minimap button opens TrailMats with a left-click, pins the tracker with a right-click and opens the settings with a shift-click. Drag it around the minimap. Escape closes the main window, and **Key Bindings > AddOns** has bindings for the window, the tracker and the settings.
 
-**Options** (the window's Options button, `/tm options`, or the game's AddOns settings) covers the minimap button, zone notices, tooltip hints, crafting notices, training reminders, an optional sound, tab following, the tracker lock, and the window and tracker scale. These settings are shared by all your characters; recipes, prices, the selected tab and window positions stay per character. Opening a crafting window selects that profession's tab.
+**Options** (the window's Options button, `/tm options`, or the game's AddOns settings) covers the minimap button, zone notices, tooltip hints, crafting notices, training reminders, an optional sound, tab following, the tracker lock, price recording while browsing, the auction house cut and the neutral-house rate, and the window and tracker scale. These settings are shared by all your characters; recipes, prices, the selected tab and window positions stay per character. Opening a crafting window selects that profession's tab.
 
 Crafting notices say when your bags cover the whole target for the current recipe, and when a skill-up means the current recipe's target is reached and it is time to switch. Training reminders appear once per login when a profession reaches its trained cap. Each notice appears once per login for a given target or cap. Nothing is crafted or trained for you.
 
 ## Commands
 
-`/tm` opens or closes the window. `/tm now`, `/tm keep`, `/tm mats` and `/tm help` open a view. `/tm track` toggles the selected profession's tracker. `/tm options` opens the settings; `/tm minimap` shows or hides the minimap button.
+`/tm` opens or closes the window. `/tm now`, `/tm keep`, `/tm mats`, `/tm sell` and `/tm help` open a view. `/tm track` toggles the selected profession's tracker. `/tm options` opens the settings; `/tm minimap` shows or hides the minimap button.
 
 `/tm refresh` updates recipes and sources; `/tm quiet` toggles zone notices; `/tm tips` toggles item and creature hints; `/tm auto` restores automatic destinations; `/tm status` shows the version and database connection.
 
@@ -101,9 +117,10 @@ lua5.1 tests/leveling.lua .
 lua5.1 tests/automatic.lua .
 lua5.1 tests/flow.lua .
 lua5.1 tests/sources.lua .
+lua5.1 tests/auction.lua .
 ```
 
-The simulated game tests cover navigation, price editing, tracker updates while the main window is closed, profession and zone changes, empty-bag checklists, database fallback, local vendors, caps, recipe freshness, material counts, vendor packs and stock. The planner checks every starting skill from 1 through 224 for all three crafting professions, including ingredient accounting, intermediate production and incomplete prices.
+The simulated game tests cover navigation, price editing, tracker updates while the main window is closed, profession and zone changes, empty-bag checklists, database fallback, local vendors, caps, recipe freshness, material counts, vendor packs and stock. The planner checks every starting skill from 1 through 224 for all three crafting professions, including ingredient accounting, intermediate production and incomplete prices. The auction suite runs both auction house backends against separate mocks: page parsing, store merge rules, the scan queue and its paging limits, expiry, the price cascade, profit examples, bag totals, Auctionator and TSM interop, and that no bid, buyout or post call is ever made.
 
 Optional integration checks use separately installed Questie/QuestieDB and Python with `cbor2` (and `lupa` for the Materials check):
 
