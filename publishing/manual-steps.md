@@ -54,6 +54,10 @@ Status on 2026-10-17: CurseForge and Wago Addons list World of Warcraft: Forever
 4. Verify on CurseForge that the file shows flavor Forever / 1.60.1 and that the project page lists Questie as an optional dependency; verify the Wago release shows stability stable and patch 1.60.1.
 5. Install from the CurseForge app (or the zip) into `_classic_beta_/Interface/AddOns`, confirm `/tm status` prints 0.12.0, and update the README install section to point at CurseForge/Wago.
 
+## 6a. Re-running the packager for an existing tag
+
+Actions > Package and release > Run workflow, enter the tag (for example `v0.12.0`). The packager updates that tag's GitHub release and re-uploads to any site whose token and project ID are now set, so adding the CurseForge or Wago secrets after a release only needs a re-run, not a new tag. Done this way for v0.12.0 on 2026-10-18 after fixing the token variable name (`GITHUB_OAUTH`).
+
 ## 7. After launch (November 4, 2026)
 
 - [ ] Run `/dump select(4, GetBuildInfo())` on the live client; if it is not 16001, add the new number to `## Interface:` and release a patch version.
