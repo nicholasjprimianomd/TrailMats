@@ -99,7 +99,7 @@ function T.RenderLeveling(id,row,page)
             shown=shown+1
             local action,detail,source=T.MaterialAdvice(m,T.professions[id].name.." to skill "..p.target,nil,c.steps)
             row(T.ItemName(m.item).."\n"..muted..source.."|r",detail,
-                nil,nil,{item=m.item,value=action.."\nHave "..m.have})
+                nil,nil,{item=m.item,value=action,have=m.have,need=m.need,state=T.MaterialState(m)})
         end
     end
     if shown==0 then row("Materials covered.","You have the supplies for this route. Check Recipes for anything you must make first or still need to learn.") end
@@ -135,7 +135,7 @@ function T.RenderMaterials(selected,row)
                 missingRaw=missingRaw+1
                 if T.ZoneSource(m.item) then key="here";localRaw=localRaw+1 else key="away" end
             end
-            entries[#entries+1]={key=key,item=m.item,action=action,detail=detail,source=source,have=m.have}
+            entries[#entries+1]={key=key,item=m.item,action=action,detail=detail,source=source,have=m.have,need=m.need,state=T.MaterialState(m)}
         end
     end
     if missingRaw>0 and localRaw==0 then
@@ -147,7 +147,7 @@ function T.RenderMaterials(selected,row)
             if e.key==g.key then
                 if not shown then heading(g.key=="away" and not T.qdb and not T.dropDB and "Source database unavailable" or g.name);shown=true end
                 row(T.ItemName(e.item).."\n"..muted..e.source.."|r",e.detail,nil,nil,
-                    {item=e.item,value=e.action.."\nHave "..e.have})
+                    {item=e.item,value=e.action,have=e.have,need=e.need,state=e.state})
             end
         end
     end
@@ -158,7 +158,7 @@ function T.RenderMaterials(selected,row)
             local detail=use
             row(T.ItemName(use.item).."\n"..muted..use.recipe.name.."|r",
                 function() return T.FutureText(detail).."\n"..T.FutureDetail(detail) end,nil,nil,
-                {item=use.item,value="Keep up to "..use.material.need.."\nHave "..use.material.have})
+                {item=use.item,value="Keep up to "..use.material.need,have=use.material.have,need=use.material.need,state="keep"})
         end
     end
 end

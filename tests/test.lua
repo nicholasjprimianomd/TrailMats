@@ -470,8 +470,18 @@ T.Refresh(false,false);T.SelectProfession(129);T.Command("keep")
 check(T.window.keep.text=="Materials","existing Keep view becomes Materials")
 check(screen():find("Heavy Linen Bandage",1,true) and screen():find("to skill 80",1,true),"empty bags show efficient recipe and target")
 check(screen():find("Linen Cloth",1,true) and screen():find("Collect 32 more",1,true) and screen():find("Rascal",1,true),"empty bags show missing amount and database source")
+-- The value column is an action in the row's colour over a have/need bar, not two stacked lines.
+local function valueRow(name)
+    for _,r in ipairs(T.window.rows) do if r:IsShown() and r.label.text:find(name,1,true) and r.value and r.value:IsShown() then return r end end
+    error("no value row: "..name)
+end
+local linen=valueRow("Linen Cloth")
+check(linen.bar:IsShown() and linen.bar.text.text=="0 / 32" and linen.bar.max==32 and linen.bar.value==0,"material rows carry a have/need bar")
+check(linen.accent:IsShown() and linen.value.text:find("|cff",1,true) and not linen.value.text:find("Have",1,true),"action line is coloured and no longer repeats the count")
+check(T.window.rows[1].heading and not T.window.rows[1].accent:IsShown(),"headings carry no accent strip")
 inventory[2589]=10;event("BAG_UPDATE_DELAYED")
 check(screen():find("Collect 22 more",1,true),"Materials updates remaining quantity after looting")
+check(valueRow("Linen Cloth").bar.text.text=="10 / 32" and valueRow("Linen Cloth").bar.value==10,"the bar follows your bags")
 currentMap=9999;event("ZONE_CHANGED_NEW_AREA")
 check(screen():find("No listed source",1,true) and not screen():find("Rascal",1,true),"zone without source clears old targets and explains absence")
 T.qdb=nil;T.dropDB=nil;T.sourceCache={};T.Render()

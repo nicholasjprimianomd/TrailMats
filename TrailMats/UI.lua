@@ -4,6 +4,9 @@ local muted="|cffb6c2cc"
 local green="|cff88d99d"
 local width=456
 local tabWidths={[165]=128,[393]=82,[356]=76,[185]=80,[129]=86}
+-- Row colours by what the player must do: the accent strip, the action line and the bar share one.
+local states={collect={0.36,0.72,0.59},buy={1,0.82,0.5},prepare={0.95,0.62,0.35},ready={0.53,0.85,0.62},keep={0.56,0.65,0.73}}
+local function tint(c) return string.format("|cff%02x%02x%02x",math.floor(c[1]*255+0.5),math.floor(c[2]*255+0.5),math.floor(c[3]*255+0.5)) end
 local function button(parent,text,w,click)
     local b=CreateFrame("Button",nil,parent,"UIPanelButtonTemplate")
     b:SetSize(w,24);b:SetText(text);b:SetScript("OnClick",click)
@@ -172,7 +175,7 @@ function T.Render()
     f.scroll:ClearAllPoints();f.scroll:SetPoint("TOPLEFT",18,-y-76);f.scroll:SetPoint("BOTTOMRIGHT",-46,72)
     for _,r in ipairs(f.rows) do
         r:Hide();if r.action then r.action:Hide() end
-        if r.value then r.value:Hide() end;if r.icon then r.icon:Hide() end
+        if r.value then r.value:Hide();r.note:Hide();r.bar:Hide() end;if r.icon then r.icon:Hide() end
     end
     local index,height=0,0
     local function row(text,detail,actionText,click,options)
@@ -182,18 +185,25 @@ function T.Render()
             r:SetScript("OnMouseWheel",function(_,delta) T.ScrollBy(-delta*48) end)
             r.label=label(r,"GameFontHighlight",width-16)
             r.background=r:CreateTexture(nil,"BACKGROUND");r.background:SetAllPoints()
+            r.accent=r:CreateTexture(nil,"BORDER");r.accent:SetPoint("TOPLEFT");r.accent:SetPoint("BOTTOMLEFT");r.accent:SetWidth(3)
             r:SetScript("OnEnter",function(self)
+                if not self.heading then self.background:SetColorTexture(0.18,0.26,0.28,0.7) end
                 local detail=type(self.detail)=="function" and self.detail() or self.detail
                 if detail then GameTooltip:SetOwner(self,"ANCHOR_RIGHT");GameTooltip:AddLine(detail,0.85,0.9,0.9,true);GameTooltip:Show() end
             end)
-            r:SetScript("OnLeave",function() GameTooltip:Hide() end)
+            r:SetScript("OnLeave",function(self)
+                if not self.heading then self.background:SetColorTexture(0.12,0.18,0.19,0.35) end
+                GameTooltip:Hide()
+            end)
             f.rows[index]=r
         end
         local left=options.item and 40 or 8
         local right=(options.value or click) and 114 or 8
-        r.detail=detail;r:ClearAllPoints();r:SetPoint("TOPLEFT",0,-height)
+        r.detail=detail;r.heading=options.heading;r:ClearAllPoints();r:SetPoint("TOPLEFT",0,-height)
         r.label:ClearAllPoints();r.label:SetPoint("TOPLEFT",left,-6);r.label:SetWidth(width-left-right);r.label:SetText(text)
-        r.background:SetColorTexture(0.12,0.18,0.19,options.heading and 0 or index%2==1 and 0.55 or 0.22)
+        r.background:SetColorTexture(0.12,0.18,0.19,options.heading and 0 or 0.35)
+        local color=states[options.state]
+        if color then r.accent:SetColorTexture(color[1],color[2],color[3],0.9);r.accent:Show() else r.accent:Hide() end
         local h=math.max(18,r.label:GetStringHeight() or 18)+12
         if options.item then
             if not r.icon then r.icon=r:CreateTexture(nil,"ARTWORK");r.icon:SetPoint("TOPLEFT",8,-6);r.icon:SetSize(24,24) end
@@ -201,8 +211,28 @@ function T.Render()
             r.icon:Show();h=math.max(h,36)
         end
         if options.value then
-            if not r.value then r.value=label(r,"GameFontHighlight",104);r.value:SetPoint("TOPRIGHT",-8,-6);r.value:SetJustifyH("RIGHT") end
-            r.value:SetText(options.value);r.value:Show();h=math.max(h,(r.value:GetStringHeight() or 18)+12)
+            if not r.value then
+                r.value=label(r,"GameFontHighlight",104);r.value:SetPoint("TOPRIGHT",-8,-6);r.value:SetJustifyH("RIGHT")
+                r.note=label(r,"GameFontHighlightSmall",104);r.note:SetPoint("TOPRIGHT",r.value,"BOTTOMRIGHT",0,-1);r.note:SetJustifyH("RIGHT")
+                r.bar=CreateFrame("StatusBar",nil,r);r.bar:SetSize(104,11);r.bar:SetPoint("TOPRIGHT",r.value,"BOTTOMRIGHT",0,-3)
+                r.bar:SetStatusBarTexture("Interface\\Buttons\\WHITE8X8")
+                local track=r.bar:CreateTexture(nil,"BACKGROUND");track:SetAllPoints();track:SetColorTexture(0.13,0.19,0.21,1)
+                r.bar.text=r.bar:CreateFontString(nil,"OVERLAY","GameFontHighlightSmall");r.bar.text:SetPoint("CENTER")
+            end
+            -- The first line is the action in the row's colour; a have/need bar or a quiet note sits under it.
+            local action,note=tostring(options.value):match("^([^\n]*)\n?(.*)$")
+            r.value:SetText(color and (tint(color)..action.."|r") or action);r.value:Show()
+            local top=(r.value:GetStringHeight() or 14)+6
+            h=math.max(h,top+6)
+            if options.need then
+                local c=color or states.keep
+                r.bar:SetMinMaxValues(0,math.max(1,options.need));r.bar:SetValue(math.min(options.have or 0,options.need))
+                r.bar:SetStatusBarColor(c[1],c[2],c[3],1);r.bar.text:SetText((options.have or 0).." / "..options.need);r.bar:Show()
+                h=math.max(h,top+3+11+6)
+            elseif note~="" then
+                r.note:SetText(muted..note.."|r");r.note:Show()
+                h=math.max(h,top+1+(r.note:GetStringHeight() or 12)+6)
+            end
         end
         if click then
             if not r.action then r.action=button(r,actionText,100,nil);r.action:SetPoint("TOPRIGHT",-8,-6) end
@@ -230,23 +260,23 @@ function T.Render()
             heading("For "..goal.recipe.." - skill "..goal.target,
                 "Estimated ingredients for the next step. Open your profession to check the recipe. Plan shows the full route.")
             if op then row("Stop at skill "..op.stop.." or when the recipe turns green.",T.TargetText(op)) end
-            local groups={{name="Collect next",kind="raw"},{name="Buy supplies",kind="vendor"},{name="Craft these first",kind="prepare"},{name="In your bags",kind="ready"}}
+            local groups={{name="Collect next",state="collect"},{name="Buy supplies",state="buy"},{name="Craft these first",state="prepare"},{name="In your bags",state="ready"}}
             for _,group in ipairs(groups) do
                 local shown=false
                 for _,m in ipairs(goal.materials) do
-                    local kind=m.missing==0 and ((m.fromCrafts or 0)>0 and "prepare" or "ready") or (m.vendor or m.supply) and "vendor" or "raw"
-                    if kind==group.kind and (m.need or 0)>0 then
+                    local state=T.MaterialState(m)
+                    if state==group.state and (m.need or 0)>0 then
                         if not shown then heading(group.name);shown=true end
                         local action,detail,source=T.MaterialAdvice(m,T.professions[goal.profession].name.." to skill "..goal.target,goal.recipe,goal.steps)
                         row(T.ItemName(m.item).."\n"..muted..source.."|r",detail,nil,nil,
-                            {item=m.item,value=action.."\nHave "..m.have})
+                            {item=m.item,value=action,have=m.have,need=m.need,state=state})
                     end
                 end
             end
             local offers=T.CurrentMerchantSuggestions()
             if #offers>0 then heading("Available at this vendor") end
             for _,v in ipairs(offers) do
-                row(T.ItemName(v.item),T.MerchantText(v),nil,nil,{item=v.item,value="Buy "..v.amount.."\n"..T.Money(v.cost)})
+                row(T.ItemName(v.item),T.MerchantText(v),nil,nil,{item=v.item,value="Buy "..v.amount.."\n"..T.Money(v.cost),state="buy"})
             end
         elseif not T.professions[selected].craft then
             row(selected==356 and "Learn Cooking to use your catch." or "Learn Leatherworking to use your leather.",

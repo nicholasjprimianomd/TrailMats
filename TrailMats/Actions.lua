@@ -22,6 +22,12 @@ function T.NoLocalSource()
     return "No listed source in "..T.zoneName
 end
 
+-- One word for a material row's colour and grouping: what the player must do about it.
+function T.MaterialState(m)
+    if m.missing>0 then return (m.supply or m.vendor) and "buy" or "collect" end
+    return (m.fromCrafts or 0)>0 and "prepare" or "ready"
+end
+
 -- Both the immediate checklist and full plan use the same plain-language advice.
 function T.MaterialAdvice(m,goal,recipe,steps)
     local supply=m.supply or m.vendor
