@@ -45,6 +45,11 @@ function T.AuctionCut()
     if not cut or cut<0 or cut>0.5 then return 0.05 end
     return cut
 end
+-- Unit prices are fractional (a stack buyout over its count), so a product that is exactly a whole copper can land a hair
+-- above or below it in floating point. A real fraction sits at least 1/(100*count) from an integer, so shaving a millionth
+-- of a copper before rounding never changes one and never adds or drops a copper.
+function T.CeilCopper(x) return math.ceil(x-1e-6) end
+function T.FloorCopper(x) return math.floor(x+1e-6) end
 
 local function valid(copper,at,t)
     return type(copper)=="number" and copper>0 and copper<math.huge and type(at)=="number" and t-at<=EXPIRE
@@ -351,13 +356,14 @@ local function onEvent(_,event,arg1)
         local added=event=="AUCTION_HOUSE_BROWSE_RESULTS_ADDED" and type(arg1)=="table" and arg1
         local page=T.ReadBrowseResults(added or T.Safe(C_AuctionHouse and C_AuctionHouse.GetBrowseResults))
         T.MergePrices(page)
-        if s and s.backend=="modern" then
+        -- Only a result the scan asked for (s.waiting) drives it; the player's own searches are recorded and nothing more.
+        if s and s.backend=="modern" and s.waiting then
             for item in pairs(page) do s.found[item]=true end
             s.waiting=false
             if T.Safe(C_AuctionHouse.HasFullBrowseResults) then finish("Done: "..priced(s).." prices") else s.pending="more";tick(frame,0) end
         end
     elseif event=="AUCTION_HOUSE_BROWSE_FAILURE" then
-        if s and s.backend=="modern" then finish("Browse failed: "..priced(s).." prices kept") end
+        if s and s.backend=="modern" and s.waiting then finish("Browse failed: "..priced(s).." prices kept") end
     elseif event=="AUCTION_HOUSE_THROTTLED_SYSTEM_READY" then
         if s then tick(frame,0) end
     elseif event=="COMMODITY_SEARCH_RESULTS_UPDATED" then

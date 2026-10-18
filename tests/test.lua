@@ -371,6 +371,9 @@ check(screen():find("Light Armor Kit",1,true) and screen():find("+16s 88c",1,tru
 check(screen():find("AH >= 93s 10c (1 item unpriced)",1,true),"held leather valued after the cut; the unpriced hide keeps the >= prefix")
 GameTooltip.lines={};GameTooltip.trailMatsItem=nil;GameTooltip.item="|Hitem:2318|h[Light Leather]|h";T.AddItemTooltip(GameTooltip)
 check(table.concat(GameTooltip.lines," "):find("TrailMats AH: 1s 0c each (just now)",1,true) and table.concat(GameTooltip.lines," "):find("x99: 93s 10c after cut",1,true),"item tooltip shows the auction price and stack value")
+inventory[2318]=120;T.prices[2318].c=4/3;GameTooltip.lines={};GameTooltip.trailMatsItem=nil;T.AddItemTooltip(GameTooltip)
+check(table.concat(GameTooltip.lines," "):find("x120: 38c after cut",1,true),"stack value of a fractional unit price is not a copper short (120*(4/3-1)*0.95 is 37.99999999999999)")
+inventory[2318]=99;T.prices[2318].c=100
 T.saved.view="sell";event("ADDON_LOADED","TrailMats");check(T.saved.view=="sell","sell view survives a reload")
 T.prices[2304]=nil;T.prices[2318]=nil;T.prices[2320]=nil;GetItemInfo=nil;T.Command("now")
 -- Compact screens, local targets and an independently pinned tracker.

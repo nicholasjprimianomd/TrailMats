@@ -94,6 +94,11 @@ local cost,label=T.LevelingCost(2589,6)
 check(cost==60 and label=="AH, just now","auction price fills the cascade with its age")
 T.prices[2589].a=clock-7200;cost,label=T.LevelingCost(2589,6);check(cost==60 and label=="AH, 2 h ago","label carries the observation age")
 T.prices[2589].c=10/3;check(T.LevelingCost(2589,6)==20 and T.LevelingCost(2589,5)==17,"fractional units total then round up")
+-- 7/3*27 is 63.000000000000007 in floating point and 120*(4/3-1)*0.95 is 37.99999999999999: whole coppers must stay whole.
+T.prices[2589].c=7/3;check(T.LevelingCost(2589,27)==63 and T.CeilCopper(7/3*27)==63 and T.FloorCopper(120*(4/3-1)*0.95)==38,"float noise in a fractional unit never adds or drops a copper")
+check(T.CeilCopper(63.001)==64 and T.FloorCopper(37.999)==37 and T.CeilCopper(63)==63 and T.FloorCopper(38)==38,"real fractions and exact integers round as before")
+T.saved.levelingPrices[2589]={copper=7/3};check(T.LevelingCost(2589,27)==63,"a fractional quote rounds the same way")
+T.prices[2589].c=10/3
 T.saved.levelingPrices[2589]={copper=5};cost,label=T.LevelingCost(2589,6);check(cost==30 and label=="Your unit price","quote beats the auction house")
 T.saved.levelingPrices={}
 T.merchantStock={{item=2678,quantity=5,price=7,available=-1}}
@@ -182,6 +187,11 @@ p=T.CraftProfit(T.saved.recipes[2152]);check(p.cost==204 and p.profit==1694 and 
 T.merchantStock={}
 T.prices[2304].n=2;p=T.CraftProfit(T.saved.recipes[2152]);check(p.thin==true and p.profit==1688,"fewer than three listings flags a thin market but keeps the value")
 T.prices[2304].n=nil;p=T.CraftProfit(T.saved.recipes[2152]);check(not p.thin,"unknown listing count is not flagged")
+T.saved.recipes[6666]={id=6666,profession=165,name="Eleven leather",learned=true,rank=20,difficulty="optimal",mats={[2318]=11},outputItem=2304,outputCount=1}
+T.prices[2318].c=25/11;p=T.CraftProfit(T.saved.recipes[6666])
+check(p.cost==25 and p.value==949 and p.profit==924,"eleven units at 25c per eleven cost exactly 25c: float noise does not add a copper")
+check(T.ProfitDetail(p):find("9s 49c after the 5% cut",1,true),"tooltip sale value is the same rounded figure")
+T.prices[2318].c=100;T.saved.recipes[6666]=nil
 T.prices[2304].n=5;T.prices[2304].c=120;p=T.CraftProfit(T.saved.recipes[2152])
 check(p.value==226 and p.profit==16,"small positive profit")
 T.prices[2304].c=20;p=T.CraftProfit(T.saved.recipes[2152]);check(p.vendorBetter and p.value==50 and p.profit==-160,"vendor sale used when it beats the auction value; loss is negative")
@@ -201,6 +211,9 @@ T.plan.future.byItem[2318]={{material={need=30},recipe={name="Light Armor Kit",p
 local mats,totals=T.SellMaterials(165)
 check(#mats==2 and mats[1].item==2318 and mats[1].ahValue==9310 and mats[1].vendorValue==495 and mats[1].keep==30 and mats[1].spare==69,"held leather valued after the cut with keep and spare")
 check(mats[2].item==2934 and mats[2].ahValue==nil and totals.ah==9310 and totals.unpriced==1 and totals.vendor==505,"unpriced scraps are counted, not zeroed; vendor supplies are excluded")
+bags[2318]=120;T.prices[2318].c=4/3;mats,totals=T.SellMaterials(165)
+check(mats[1].ahValue==38 and totals.ah==38,"120 units at 4/3c are worth exactly 38c after the cut: float noise does not drop a copper")
+bags[2318]=99;T.prices[2318].c=100
 local lines={}
 local function collect(text,detail,_,_,opts) lines[#lines+1]=text..(opts and opts.value and ("\n"..opts.value) or "") end
 T.RenderSell(165,collect)
@@ -263,13 +276,21 @@ event("AUCTION_HOUSE_SHOW")
 check(T.fullScanButton:IsShown() and T.FullScanState().ready,"Full scan offered when ReplicateItems exists")
 browse.ready=false;T.auctionButton.scripts.OnClick()
 check(T.auctionScan.backend=="modern" and #browse.sent==0,"browse waits for the throttle")
-browse.ready=true;event("AUCTION_HOUSE_THROTTLED_SYSTEM_READY")
+-- The player's own search finishing (or failing) while the scan still waits for the throttle is recorded but is not the scan's result.
+browse.results={{itemKey={itemID=2592},minPrice=30,totalQuantity=4}};browse.full=true
+event("AUCTION_HOUSE_BROWSE_RESULTS_UPDATED")
+check(T.prices[2592].c==30 and T.auctionScan and T.auctionScan.pending=="browse" and #browse.sent==0 and T.AuctionStatus()=="Scanning: 0 items so far","a foreign browse result is captured but leaves the scan waiting for its own browse")
+event("AUCTION_HOUSE_BROWSE_FAILURE");check(T.auctionScan and T.auctionScan.pending=="browse","a foreign browse failure does not end a scan that has sent nothing")
+browse.full=false;browse.ready=true;event("AUCTION_HOUSE_THROTTLED_SYSTEM_READY")
 check(#browse.sent==1 and browse.sent[1].searchString=="" and browse.sent[1].sorts[1].sortOrder==1 and browse.sent[1].sorts[1].reverseSort==false,"empty browse query sorted by name")
 browse.results={{itemKey={itemID=2318},minPrice=50,totalQuantity=10},{itemKey={itemID=2318,itemLevel=5},minPrice=40,totalQuantity=1},{itemKey={itemID=2589},minPrice=0,totalQuantity=3}}
-event("AUCTION_HOUSE_BROWSE_RESULTS_UPDATED")
+browse.ready=false;event("AUCTION_HOUSE_BROWSE_RESULTS_UPDATED")
 check(T.prices[2318].c==40 and T.prices[2318].n==nil and T.prices[2589]==nil,"minimum across item keys per item id; zero prices skipped; listings unknown")
-check(T.auctionScan and browse.more==1 and T.AuctionStatus()=="Scanning: 1 items so far","partial results request more")
-browse.full=true;event("AUCTION_HOUSE_BROWSE_RESULTS_ADDED",{{itemKey={itemID=2304},minPrice=900,totalQuantity=2}})
+check(T.auctionScan and browse.more==0 and T.auctionScan.pending=="more" and T.AuctionStatus()=="Scanning: 1 items so far","partial results queue a request for more behind the throttle")
+browse.full=true;event("AUCTION_HOUSE_BROWSE_RESULTS_UPDATED")
+check(T.auctionScan and T.auctionScan.pending=="more" and browse.more==0,"a foreign full result between pages does not finish the scan")
+browse.ready=true;event("AUCTION_HOUSE_THROTTLED_SYSTEM_READY");check(browse.more==1 and T.auctionScan.waiting,"more results requested once the throttle clears")
+event("AUCTION_HOUSE_BROWSE_RESULTS_ADDED",{{itemKey={itemID=2304},minPrice=900,totalQuantity=2}})
 check(T.prices[2304].c==900 and T.auctionScan==nil and T.auctionResult=="Done: 2 prices","added rows merge and the full result finishes the scan")
 commodity[2592]={{itemID=2592,quantity=5,unitPrice=30},{itemID=2592,quantity=1,unitPrice=25}}
 event("COMMODITY_SEARCH_RESULTS_UPDATED",2592);check(T.prices[2592].c==25 and T.prices[2592].n==2,"commodity search results are captured with listing counts")

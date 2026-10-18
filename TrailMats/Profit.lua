@@ -65,7 +65,7 @@ function T.CraftProfit(r)
         p.mats[#p.mats+1]={item=item,qty=r.mats[item],unit=unit,label=label}
         if unit then p.cost=p.cost+r.mats[item]*unit else p.missing[#p.missing+1]=T.ItemName(item) end
     end
-    p.cost=math.ceil(p.cost)
+    p.cost=T.CeilCopper(p.cost)
     p.sell=T.SellPrice(p.output)
     p.vendorValue=p.sell and n*p.sell or nil
     p.bop=T.BindsOnPickup(p.output)
@@ -75,7 +75,7 @@ function T.CraftProfit(r)
         local ah=T.AuctionPrice(p.output)
         if ah then
             p.ah=ah;p.thin=type(ah.listings)=="number" and ah.listings<3
-            p.value=math.floor(n*math.max(0,ah.copper-UNDER)*(1-p.cut))
+            p.ahValue=T.FloorCopper(n*math.max(0,ah.copper-UNDER)*(1-p.cut));p.value=p.ahValue
             if p.vendorValue and p.vendorValue>p.value then p.value=p.vendorValue;p.vendorBetter=true end
         else p.missing[#p.missing+1]=T.ItemName(p.output).." (sale price)" end
     end
@@ -103,7 +103,7 @@ function T.ProfitDetail(p)
     lines[#lines+1]=(#p.missing>0 and "Known cost so far " or "Cost ")..T.Money(p.cost).." per craft: "..table.concat(mats,", ")..". Full replacement cost, even for materials in your bags."
     if p.ah then
         lines[#lines+1]="Sale: "..p.n.." x "..T.ItemName(p.output).." at "..T.Money(math.floor(p.ah.copper)).." each ("..T.AuctionLabel(p.ah).."); "..
-            T.Money(math.floor(p.n*math.max(0,p.ah.copper-UNDER)*(1-p.cut))).." after the "..percent().." cut and a 1c undercut."
+            T.Money(p.ahValue).." after the "..percent().." cut and a 1c undercut."
     end
     if p.vendorValue then lines[#lines+1]="Vendor pays "..T.Money(p.vendorValue).." for "..p.n.."."..(p.vendorBetter and " Used because it beats the auction value." or "") end
     if p.bop then lines[#lines+1]="Binds when picked up: cannot be auctioned." end
@@ -128,7 +128,7 @@ function T.SellMaterials(profession)
         local have=type(item)=="number" and not T.levelingSupplies[item] and T.Count(item) or 0
         if have>0 then
             local m={item=item,have=have,ah=T.AuctionPrice(item),sell=T.SellPrice(item)}
-            if m.ah then m.ahValue=math.floor(have*math.max(0,m.ah.copper-UNDER)*(1-cut));total.ah=total.ah+m.ahValue else total.unpriced=total.unpriced+1 end
+            if m.ah then m.ahValue=T.FloorCopper(have*math.max(0,m.ah.copper-UNDER)*(1-cut));total.ah=total.ah+m.ahValue else total.unpriced=total.unpriced+1 end
             if m.sell then m.vendorValue=have*m.sell;total.vendor=total.vendor+m.vendorValue else total.noInfo=total.noInfo+1 end
             local uses=T.plan and T.plan.future and T.plan.future.byItem[item]
             if uses and uses[1] then
