@@ -32,6 +32,11 @@ function T.SyncScroll(value)
     if f.activeKey then f.positions[f.activeKey]=value end
     f.syncing=false
 end
+-- Offsets from the screen centre in the frame's own scale, so SetPoint restores them at any scale.
+function T.Offsets(f)
+    local x,y=f:GetCenter();local px,py=UIParent:GetCenter();local s=f:GetScale() or 1
+    return x-px/s,y-py/s
+end
 function T.CreateWindow()
     if T.window then return end
     local f=CreateFrame("Frame","TrailMatsWindow",UIParent,"BackdropTemplate")
@@ -43,11 +48,8 @@ function T.CreateWindow()
     f.drag=CreateFrame("Frame",nil,f);f.drag:SetPoint("TOPLEFT");f.drag:SetPoint("TOPRIGHT",-78,0);f.drag:SetHeight(38)
     f.drag:EnableMouse(true);f.drag:RegisterForDrag("LeftButton")
     f.drag:SetScript("OnDragStart",function() f:StartMoving() end)
-    f.drag:SetScript("OnDragStop",function()
-        f:StopMovingOrSizing();local x,y=f:GetCenter();local px,py=UIParent:GetCenter()
-        T.saved.x=x-px;T.saved.y=y-py
-    end)
-    f.title=label(f.drag,"GameFontNormalLarge",350);f.title:SetPoint("TOPLEFT",18,-14);f.title:SetText("TrailMats")
+    f.drag:SetScript("OnDragStop",function() f:StopMovingOrSizing();T.saved.x,T.saved.y=T.Offsets(f) end)
+    f.title=label(f.drag,"GameFontNormalLarge",350);f.title:SetPoint("TOPLEFT",18,-14);f.title:SetText("TrailMats "..muted..T.version.."|r")
     f.close=button(f,"Close",55,function() T.saved.hidden=true;f:Hide() end);f.close:SetPoint("TOPRIGHT",-14,-10)
     f.zone=label(f,"GameFontHighlight",484);f.zone:SetPoint("TOPLEFT",18,-43)
     f.tabs={}
@@ -83,10 +85,14 @@ function T.CreateWindow()
     f.refresh=button(f,"Refresh",74,function() T.Command("refresh") end);f.refresh:SetPoint("BOTTOMLEFT",18,35)
     f.prices=button(f,"Prices",84,function() f.planPage=f.planPage=="prices" and "materials" or "prices";T.Render() end);f.prices:SetPoint("LEFT",f.refresh,"RIGHT",6,0)
     f.track=button(f,"Track",74,function() T.ToggleTracker() end);f.track:SetPoint("LEFT",f.refresh,"RIGHT",6,0)
-    f.scrollHint=label(f,"GameFontDisableSmall",200);f.scrollHint:SetPoint("BOTTOMRIGHT",-18,40);f.scrollHint:SetJustifyH("RIGHT")
+    f.options=button(f,"Options",74,function() T.OpenOptions() end);f.options:SetPoint("BOTTOMRIGHT",-14,35)
+    f.scrollHint=label(f,"GameFontDisableSmall",200);f.scrollHint:SetPoint("RIGHT",f.options,"LEFT",-8,0);f.scrollHint:SetJustifyH("RIGHT")
     f.footer=label(f,"GameFontDisableSmall",484);f.footer:SetPoint("BOTTOMLEFT",18,12)
     f.footer:SetText("Hover for the recipe and source  |  Counts are estimates")
     f:SetScript("OnShow",function() T.Render() end)
+    -- Escape hides the frame itself; a hidden parent (cinematics) must not count as closing it.
+    f:SetScript("OnHide",function(self) if not self:IsShown() then T.saved.hidden=true end end)
+    if UISpecialFrames then table.insert(UISpecialFrames,"TrailMatsWindow") end
     if T.saved.hidden then f:Hide() end
 end
 function T.MaterialSource(m)
@@ -102,11 +108,8 @@ function T.CreateTracker()
     f:SetClampedToScreen(true);f:SetMovable(true);f:EnableMouse(true);f:RegisterForDrag("LeftButton")
     f:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8X8",edgeFile="Interface\\Buttons\\WHITE8X8",edgeSize=1})
     f:SetBackdropColor(0.035,0.055,0.065,0.92);f:SetBackdropBorderColor(0.35,0.47,0.46,1)
-    f:SetScript("OnDragStart",function() f:StartMoving() end)
-    f:SetScript("OnDragStop",function()
-        f:StopMovingOrSizing();local x,y=f:GetCenter();local px,py=UIParent:GetCenter()
-        T.saved.trackX=x-px;T.saved.trackY=y-py
-    end)
+    f:SetScript("OnDragStart",function() if not T.settings.lockTracker then f:StartMoving() end end)
+    f:SetScript("OnDragStop",function() f:StopMovingOrSizing();T.saved.trackX,T.saved.trackY=T.Offsets(f) end)
     f.title=label(f,"GameFontNormalSmall",262);f.title:SetPoint("TOPLEFT",10,-10)
     f.action=label(f,"GameFontHighlight",320);f.action:SetPoint("TOPLEFT",10,-32)
     f.lines={}
@@ -258,7 +261,7 @@ function T.Render()
     f.content:SetHeight(math.max(1,height));T.SyncScroll(scroll)
 end
 function T.AddNPCTooltip(tooltip,unit)
-    if not T.plan or not T.saved.tooltips then return end
+    if not T.plan or not T.settings.tooltips then return end
     local npc=T.NPCFromGUID(T.Safe(UnitGUID,unit or "mouseover"));local id=T.SelectedProfession()
     local key=tostring(npc)..":"..tostring(id)
     if not npc or tooltip.trailMatsNPC==key then return end
@@ -281,7 +284,7 @@ function T.AddNPCTooltip(tooltip,unit)
     if added then tooltip:Show() end
 end
 function T.AddItemTooltip(tooltip)
-    if not T.plan or not T.saved.tooltips then return end
+    if not T.plan or not T.settings.tooltips then return end
     local _,link=tooltip:GetItem();local item=link and tonumber(link:match("item:(%d+)"));local id=T.SelectedProfession()
     local key=tostring(item)..":"..tostring(id)
     if not item or tooltip.trailMatsItem==key then return end

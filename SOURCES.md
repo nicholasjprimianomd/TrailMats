@@ -1,5 +1,13 @@
 # Data provenance and implementation notes
 
+## 0.11.0 settings, minimap button and notices, 2026-10-17
+
+Adds an account-wide `TrailMatsSettings` saved variable, an options page registered with the game's AddOns settings (new Settings API with the older Interface Options frame as fallback), a minimap button, key bindings, Escape to close, window and tracker scale, and chat notices. Zone-notice and tooltip toggles move from the per-character file to the shared settings; the first character to log in carries its old values over. Recipes, prices, the selected tab and window positions stay per character.
+
+The notices use only data the planner already holds: a target is "ready" when bag counts cover every ingredient for the automatic craft count, a "switch" fires when skill reaches the previous target's stopping point, and a training reminder fires at the trained cap. Each fires once per login per target or cap. No skill-up probabilities, trainer locations or recipe sources were added. The minimap button uses the game's own border, highlight and bag icon textures and the usual 31-pixel button on the minimap ring; no third-party library is bundled.
+
+Verification: the simulated game suite covers settings defaults and migration, the minimap button (toggle, pin, drag angle, hide), the options page controls, tab following, the three notice types with their off switches, and the unknown-command message. Live appearance of the options page inside the game's settings frame still needs a check.
+
 ## 0.10.1 zone notices, 2026-10-17
 
 Zone notices now wait until the client reports a zone name, and repeats are detected by that name. Before, the first refresh after a loading screen could announce "Unknown zone" before the map resolved. A zone outside TrailMats' own table could also be announced twice when Questie's area ID arrived after its name. No data sources or planner behavior changed. A simulated loading-screen test covers both cases; the live game still needs a check.

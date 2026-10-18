@@ -1,10 +1,10 @@
-# TrailMats 0.10.1
+# TrailMats 0.11.0
 
 What to craft, gather and keep while leveling in WoW Forever.
 
 ## Install
 
-Download [TrailMats-0.10.1.zip](https://github.com/nicholasjprimianomd/TrailMats/releases/tag/v0.10.1). Extract the `TrailMats` folder into `Interface/AddOns`, restart WoW, then type `/tm`. Keep Questie and QuestieDB installed separately for source references. Existing character settings are preserved.
+Download [TrailMats-0.11.0.zip](https://github.com/nicholasjprimianomd/TrailMats/releases/tag/v0.11.0). Extract the `TrailMats` folder into `Interface/AddOns`, restart WoW, then type `/tm`. Keep Questie and QuestieDB installed separately for source references. Existing character settings are preserved.
 
 Only the inner `TrailMats` folder belongs in AddOns. TrailMats never buys or crafts automatically.
 
@@ -74,9 +74,17 @@ Local source coverage depends on Questie/QuestieDB and a small set of fish and s
 
 The compact tracker and hover-first layout take inspiration from [Questie](https://www.curseforge.com/wow/addons/questie) and [Profession Shopping List](https://www.curseforge.com/wow/addons/profession-shopping-list). Their code and artwork are not bundled.
 
+## Settings, minimap button and notices
+
+A minimap button opens TrailMats with a left-click, pins the tracker with a right-click and opens the settings with a shift-click. Drag it around the minimap. Escape closes the main window, and **Key Bindings > AddOns** has bindings for the window, the tracker and the settings.
+
+**Options** (the window's Options button, `/tm options`, or the game's AddOns settings) covers the minimap button, zone notices, tooltip hints, crafting notices, training reminders, an optional sound, tab following, the tracker lock, and the window and tracker scale. These settings are shared by all your characters; recipes, prices, the selected tab and window positions stay per character. Opening a crafting window selects that profession's tab.
+
+Crafting notices say when your bags cover the whole target for the current recipe, and when a skill-up means the current recipe's target is reached and it is time to switch. Training reminders appear once per login when a profession reaches its trained cap. Each notice appears once per login for a given target or cap. Nothing is crafted or trained for you.
+
 ## Commands
 
-`/tm` opens or closes the window. `/tm now`, `/tm keep`, `/tm mats` and `/tm help` open a view. `/tm track` toggles the selected profession's tracker.
+`/tm` opens or closes the window. `/tm now`, `/tm keep`, `/tm mats` and `/tm help` open a view. `/tm track` toggles the selected profession's tracker. `/tm options` opens the settings; `/tm minimap` shows or hides the minimap button.
 
 `/tm refresh` updates recipes and sources; `/tm quiet` toggles zone notices; `/tm tips` toggles item and creature hints; `/tm auto` restores automatic destinations; `/tm status` shows the version and database connection.
 
@@ -104,6 +112,6 @@ python tests/real_database.py "/path/to/World of Warcraft/_classic_beta_/Interfa
 python tests/materials_database.py "/path/to/World of Warcraft/_classic_beta_/Interface/AddOns"
 ```
 
-Automated checks pass for 0.10.1. In-game appearance and interaction still need a live visual check.
+Automated checks pass for 0.11.0. In-game appearance and interaction still need a live visual check.
 
 Version 0.5.0 was imported from the updated Drive bundle on October 6, 2026. Original 0.3.0 source is retained in Git history; the 0.4.0 and 0.5.0 changes arrived together.

@@ -112,13 +112,10 @@ function T.NextAction(id)
     end
     local op=T.plan and T.plan.opportunities[id]
     if op then
-        local ready=op.batch
+        local ready=T.ReadyCrafts(op)
         local rawMissing=0
         for _,m in ipairs(op.materials) do
-            ready=math.min(ready,math.floor(m.have/m.perCraft))
-            if m.have<m.perCraft then
-                if not m.vendor then rawMissing=rawMissing+1 end
-            end
+            if m.have<m.perCraft and not m.vendor then rawMissing=rawMissing+1 end
         end
         if ready>0 then
             return {text="Craft "..ready.." x "..op.name,detail="You can make "..ready.." now. "..T.TargetText(op).." Craft in your profession window."}

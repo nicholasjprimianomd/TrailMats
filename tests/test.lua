@@ -8,9 +8,18 @@ local function flush()
     local work=timers;timers={};for _,fn in ipairs(work) do fn() end
 end
 local methods={}
-for _,name in ipairs({"SetSize","SetPoint","SetWidth","SetHeight","ClearAllPoints","SetClampedToScreen","SetMovable","EnableMouse","RegisterForDrag","StartMoving","StopMovingOrSizing","SetBackdrop","SetBackdropColor","SetBackdropBorderColor","SetJustifyH","SetJustifyV","SetScrollChild","SetOwner","SetAllPoints","SetColorTexture","SetTexture","SetVertexColor","SetOrientation","SetValueStep","SetStatusBarTexture","SetStatusBarColor","LockHighlight","UnlockHighlight"}) do
+for _,name in ipairs({"SetSize","SetPoint","SetWidth","SetHeight","ClearAllPoints","SetClampedToScreen","SetMovable","EnableMouse","RegisterForDrag","SetBackdrop","SetBackdropColor","SetBackdropBorderColor","SetJustifyH","SetJustifyV","SetScrollChild","SetOwner","SetAllPoints","SetColorTexture","SetTexture","SetVertexColor","SetOrientation","SetValueStep","SetStatusBarTexture","SetStatusBarColor","LockHighlight","UnlockHighlight",
+    "SetFrameStrata","SetFrameLevel","RegisterForClicks","SetHighlightTexture","SetTexCoord","SetObeyStepOnDrag","SetParent"}) do
     methods[name]=function() end
 end
+function methods:StartMoving() self.moving=true end
+function methods:StopMovingOrSizing() self.moving=false end
+function methods:SetScale(s) self.scale=s end
+function methods:GetScale() return self.scale or 1 end
+function methods:GetEffectiveScale() return 1 end
+function methods:GetWidth() return self.width or 140 end
+function methods:SetChecked(v) self.checked=v end
+function methods:GetChecked() return self.checked end
 function methods:SetSize(w,h) self.width=w;self.height=h end
 function methods:SetWidth(w) self.width=w end
 function methods:SetHeight(h) self.height=h end
@@ -51,6 +60,18 @@ end
 CreateFrame=function() return widget() end
 UIParent=widget();WorldFrame=widget();GameTooltip=widget()
 GameTooltipTextLeft1=widget()
+Minimap=widget();UISpecialFrames={}
+local cursorX,cursorY=500,400
+GetCursorPosition=function() return cursorX,cursorY end
+local shiftDown=false
+IsShiftKeyDown=function() return shiftDown end
+local optionsPanel,openedOptions=nil,0
+InterfaceOptions_AddCategory=function(panel) optionsPanel=panel end
+InterfaceOptionsFrame_OpenToCategory=function(panel)
+    panel:Show();if panel.scripts.OnShow then panel.scripts.OnShow(panel) end;openedOptions=openedOptions+1
+end
+local sounds={}
+PlaySound=function(id) sounds[#sounds+1]=id end
 local messages={}
 DEFAULT_CHAT_FRAME={AddMessage=function(_,text) messages[#messages+1]=text end}
 SlashCmdList={}
@@ -98,9 +119,45 @@ GetMerchantItemID=function(i) return merchant[i].id end
 BuyMerchantItem=function() error("must never buy") end
 DoTradeSkill=function() error("must never craft") end
 
+TrailMatsDB={announce=false} -- a character that turned zone notices off before settings became account-wide
 event("ADDON_LOADED","TrailMats");event("PLAYER_LOGIN")
 check(T.saved.view=="overview","fresh install starts on Now")
 check(not T.tracker:IsShown() and not T.saved.trackProfession,"tracker starts opt-in")
+-- Account-wide settings, a minimap button and an options panel, like a standard addon.
+check(TrailMatsSettings and T.settings==TrailMatsSettings and T.settings.tooltips==true and T.settings.scale==1,"account-wide settings start from defaults")
+check(T.settings.announce==false and T.saved.announce==nil,"old per-character notice setting carries over once");T.settings.announce=true
+check(messages[#messages]:find("/tm options",1,true) and T.saved.welcomed,"first login prints a one-time welcome")
+check(UISpecialFrames[1]=="TrailMatsWindow","Escape closes the window")
+check(BINDING_HEADER_TRAILMATS and BINDING_NAME_TRAILMATS_TOGGLE and BINDING_NAME_TRAILMATS_TRACK,"key binding names registered")
+check(T.window.title.text:find(T.version,1,true),"window title shows the version")
+local mm=T.minimapButton
+check(mm and mm:IsShown() and mm.point[2]==Minimap,"minimap button attached and shown")
+local shown=T.window:IsShown()
+mm.scripts.OnClick(mm,"LeftButton");check(T.window:IsShown()~=shown,"minimap left-click toggles the window")
+mm.scripts.OnClick(mm,"LeftButton");check(T.window:IsShown()==shown,"minimap left-click toggles it back")
+mm.scripts.OnClick(mm,"RightButton");check(T.saved.trackProfession==T.SelectedProfession() and T.tracker:IsShown(),"minimap right-click pins the tracker")
+mm.scripts.OnClick(mm,"RightButton");check(not T.saved.trackProfession,"minimap right-click unpins it")
+GameTooltip.lines={};mm.scripts.OnEnter(mm)
+check(table.concat(GameTooltip.lines," "):find("Left-click",1,true) and table.concat(GameTooltip.lines," "):find(T.NextAction(T.SelectedProfession()).text,1,true),"minimap tooltip shows the next step")
+cursorX,cursorY=500,480 -- straight above the minimap centre
+mm.scripts.OnDragStart(mm);mm.scripts.OnUpdate(mm);mm.scripts.OnDragStop(mm)
+check(math.abs(T.settings.minimap.angle-90)<0.01 and math.abs(mm.point[4])<0.01 and math.abs(mm.point[5]-75)<0.01,"dragging saves the angle and keeps the button on the ring")
+T.Command("minimap");check(T.settings.minimap.hide and not mm:IsShown(),"/tm minimap hides the button")
+T.Command("minimap");check(mm:IsShown(),"/tm minimap shows it again")
+check(optionsPanel==T.options and T.options.name=="TrailMats","options panel registered with the interface options")
+T.Command("options");check(openedOptions==2 and T.options:IsShown(),"/tm options opens the panel")
+shiftDown=true;mm.scripts.OnClick(mm,"LeftButton");shiftDown=false;check(openedOptions==4,"shift-click on the minimap opens settings")
+local function control(text) for _,c in ipairs(T.options.controls) do if c.label.text==text then return c end end error("no control "..text) end
+local zone=control("Zone notices in chat");check(zone:GetChecked()==true,"checkbox reflects the setting")
+zone:SetChecked(false);zone.scripts.OnClick(zone);check(T.settings.announce==false,"checkbox writes the setting")
+T.Command("quiet");check(T.settings.announce==true and zone:GetChecked()==true,"/tm quiet still toggles and the panel follows")
+local scale=control("Window scale");scale:SetValue(1.2)
+check(math.abs(T.window:GetScale()-1.2)<0.001 and math.abs(T.settings.scale-1.2)<0.001 and scale.readout.text=="120%","window scale applies immediately")
+local lock=control("Lock the tracker position");lock:SetChecked(true);lock.scripts.OnClick(lock)
+T.tracker.scripts.OnDragStart();check(T.settings.lockTracker and not T.tracker.moving,"locked tracker ignores dragging")
+T.saved.x=5;T.ResetPositions();check(T.saved.x==nil and T.settings.minimap.angle==220,"Reset positions clears saved offsets")
+T.ResetSettings();check(T.settings.scale==1 and T.window:GetScale()==1 and not T.settings.lockTracker and T.settings.minimap.hide==false,"Default settings restores every value")
+T.options:Hide()
 check(T.plan.future.byItem[2318]~=nil,"held leather has future uses before recipe scan")
 check(not T.plan.opportunities[165],"future reference does not grant learned opportunities")
 T.window.overview.scripts.OnClick()
@@ -144,6 +201,8 @@ GetTradeSkillRecipeLink=function() return "|Henchant:2152|h[Light Armor Kit]|h" 
 GetTradeSkillNumReagents=function() return 2 end
 GetTradeSkillReagentInfo=function(_,j) return j==1 and "Light Leather" or "Coarse Thread",nil,j==1 and 2 or 1 end
 GetTradeSkillReagentItemLink=function(_,j) return "|Hitem:"..(j==1 and 2318 or 2320).."|h[Reagent]|h" end
+T.SelectProfession(129);event("TRADE_SKILL_SHOW");check(T.saved.profession==165,"opening a crafting window selects its tab")
+T.settings.follow=false;T.SelectProfession(129);event("TRADE_SKILL_SHOW");check(T.saved.profession==129,"tab following can be turned off");T.settings.follow=true
 T.SelectProfession(165);event("TRADE_SKILL_SHOW")
 local op=T.CurrentOpportunity()
 check(op and op.batch==12 and op.stop==30,"automatic estimate reaches recipe switch at 30")
@@ -225,10 +284,17 @@ T.ScrollBy(100000);check(T.window.scroll:GetVerticalScroll()==math.max(0,T.windo
 T.ScrollBy(-100000);check(T.window.scroll:GetVerticalScroll()==0,"scroll bounded above")
 T.window.close.scripts.OnClick();check(T.saved.hidden and not T.window:IsShown(),"Close preserves preference")
 T.Command("");check(T.window:IsShown(),"slash command reopens")
+local n=#messages;T.Command("bogus");check(#messages==n+1 and messages[#messages]:find("Unknown command",1,true) and T.window:IsShown(),"unknown command explains instead of toggling")
 -- Missing database and old settings remain safe.
 LibQuestieDB=nil;QuestieLoader=nil;T.qdb=nil;T.dropDB=nil;T.zoneDB=nil
 T.ConnectDatabase();T.Refresh(false,false);check(T.plan~=nil,"missing database degrades safely")
+-- Skill-ups past the recipe target and reaching the cap each get one notice per login.
+ranks[165]=30;T.Refresh(false,false)
+check(messages[#messages]:find("Leatherworking 30: Light Armor Kit target reached",1,true),"passing the recipe target says to switch")
 ranks[165]=75;T.Refresh(false,false);check(not T.plan.opportunities[165],"trained cap blocks further crafting suggestions")
+check(messages[#messages]:find("Leatherworking 75/75: visit a trainer",1,true),"capped profession gets a training reminder")
+n=#messages;T.Refresh(false,false);check(#messages==n,"switch and training notices are not repeated")
+T.settings.trainReminder=false;ranks[165]=150;T.Refresh(false,false);check(#messages==n,"training reminders can be turned off");T.settings.trainReminder=true
 -- Forecasts remain separate from learned recipes and merchant purchases.
 ranks[165]=20;ranks[185]=20;ranks[129]=20
 inventory[6308]=2;inventory[783]=1;T.saved.recipes={};T.Refresh(false,false)
@@ -328,9 +394,16 @@ T.window.close.scripts.OnClick()
 inventory[2318]=5;inventory[2320]=12;event("BAG_UPDATE_DELAYED")
 check(not T.window:IsShown() and T.tracker.action.text=="Craft 2 x Light Armor Kit","bag change updates ready crafts while window closed")
 check(T.NextAction(165).text=="Craft 2 x Light Armor Kit","ready count is limited by actual materials")
+T.settings.sound=true
 inventory[2318]=1000;event("BAG_UPDATE_DELAYED")
 check(T.NextAction(165).text=="Craft 12 x Light Armor Kit","ready action stops at automatic target")
+check(messages[#messages]:find("Light Armor Kit is ready to craft 12 times (to skill 30)",1,true) and #sounds==1,"bags covering the whole target announce it, with the optional sound")
+n=#messages;event("BAG_UPDATE_DELAYED");check(#messages==n and #sounds==1,"ready notice is not repeated")
+T.settings.sound=false
 for _,m in ipairs(T.ZoneNeeds(165).here) do check(m.item~=2318,"covered material leaves the zone checklist") end
+inventory[2318]=0;event("BAG_UPDATE_DELAYED")
+T.settings.craftNotices=false;n=#messages;inventory[2318]=1000;event("BAG_UPDATE_DELAYED")
+check(#messages==n,"crafting notices can be turned off");T.settings.craftNotices=true
 inventory[2318]=0;event("BAG_UPDATE_DELAYED")
 C_Map.GetMapInfo=function() return {parentMapID=0} end
 currentMap=9999;event("ZONE_CHANGED_NEW_AREA")

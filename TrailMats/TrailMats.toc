@@ -2,8 +2,9 @@
 ## Title: TrailMats
 ## Notes: What to craft, gather and keep while leveling.
 ## Author: Nick
-## Version: 0.10.1
+## Version: 0.11.0
 ## OptionalDeps: QuestieDB, Questie
+## SavedVariables: TrailMatsSettings
 ## SavedVariablesPerCharacter: TrailMatsDB
 
 Data.lua
@@ -16,6 +17,9 @@ Planner.lua
 Sources.lua
 Client.lua
 Actions.lua
+Settings.lua
+Minimap.lua
+Notices.lua
 LevelingUI.lua
 UI.lua
 Core.lua

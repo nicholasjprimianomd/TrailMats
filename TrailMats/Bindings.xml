@@ -1,0 +1,11 @@
+<Bindings>
+    <Binding name="TRAILMATS_TOGGLE" header="TRAILMATS" category="ADDONS">
+        TrailMats.Command("")
+    </Binding>
+    <Binding name="TRAILMATS_TRACK" category="ADDONS">
+        TrailMats.ToggleTracker()
+    </Binding>
+    <Binding name="TRAILMATS_OPTIONS" category="ADDONS">
+        TrailMats.OpenOptions()
+    </Binding>
+</Bindings>

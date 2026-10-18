@@ -84,6 +84,7 @@ function T.ScanRecipes()
         local profession
         for id,s in pairs(T.skills or {}) do if s.name==name then profession=id end end
         if profession then
+            T.lastScanned=profession
             local scanned=0
             for i=1,GetNumTradeSkills() do
                 local recipeName,difficulty=GetTradeSkillInfo(i)
@@ -124,6 +125,7 @@ function T.ScanRecipes()
     end
     local skill=T.skills and T.skills[profession]
     if not skill then return end
+    T.lastScanned=profession
     local colours={[0]="optimal",[1]="medium",[2]="easy",[3]="trivial"}
     for _,id in ipairs(safe(c.GetAllRecipeIDs) or {}) do
         local recipe=safe(c.GetRecipeInfo,id)
