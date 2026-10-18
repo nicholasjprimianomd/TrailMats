@@ -110,7 +110,9 @@ MERCHANT_ITEMS_PER_PAGE=10
 MerchantItem1ItemButton=widget();MerchantItem2ItemButton=widget()
 MerchantFrame_UpdateMerchantInfo=function() end
 local hooks={}
-hooksecurefunc=function(name,fn) hooks[name]=fn end
+hooksecurefunc=function(target,name,fn)
+    if type(target)=="table" then local original=target[name];target[name]=function(...) original(...);fn(...) end else hooks[target]=name end
+end
 local merchant={}
 GetMerchantNumItems=function() return #merchant end
 GetMerchantItemInfo=function(i) local m=merchant[i];return m.name,nil,m.price,m.pack,m.stock,m.purchasable~=false,true,m.extended,m.currency end
@@ -202,7 +204,14 @@ GetTradeSkillRecipeLink=function() return "|Henchant:2152|h[Light Armor Kit]|h" 
 GetTradeSkillNumReagents=function() return 2 end
 GetTradeSkillReagentInfo=function(_,j) return j==1 and "Light Leather" or "Coarse Thread",nil,j==1 and 2 or 1 end
 GetTradeSkillReagentItemLink=function(_,j) return "|Hitem:"..(j==1 and 2318 or 2320).."|h[Reagent]|h" end
+-- Blizzard's crafting window is load-on-demand: its schematic form is hooked when it loads or opens, once.
+local function schematicForm() local f=widget();f.Init=function() end;f.reagentSlotPool={EnumerateActive=function() return pairs({}) end};return f end
+local craftingForm=schematicForm();ProfessionsFrame={CraftingPage={SchematicForm=craftingForm}}
+local craftingInit=craftingForm.Init;event("ADDON_LOADED","Blizzard_Professions")
+check(craftingForm.Init~=craftingInit and T.saved.view=="overview","loading Blizzard_Professions hooks the form and leaves our own state alone")
+local inspectForm=schematicForm();InspectRecipeFrame={SchematicForm=inspectForm};local inspectInit=inspectForm.Init
 T.SelectProfession(129);event("TRADE_SKILL_SHOW");check(T.saved.profession==165,"opening a crafting window selects its tab")
+check(inspectForm.Init~=inspectInit and not T.InstallReagentHooks(),"opening a crafting window hooks a form that appeared since, and nothing twice")
 T.settings.follow=false;T.SelectProfession(129);event("TRADE_SKILL_SHOW");check(T.saved.profession==129,"tab following can be turned off");T.settings.follow=true
 T.SelectProfession(165);event("TRADE_SKILL_SHOW")
 local op=T.CurrentOpportunity()

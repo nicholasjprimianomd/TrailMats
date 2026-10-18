@@ -69,7 +69,8 @@ end
 
 frame:SetScript("OnEvent",function(_,event,name)
     if event=="ADDON_LOADED" then
-        if name~=addon then return end
+        -- Blizzard's crafting window is a load-on-demand add-on; hook its reagent slots once it exists.
+        if name~=addon then T.InstallReagentHooks();return end
         _G.TrailMatsDB=type(_G.TrailMatsDB)=="table" and _G.TrailMatsDB or {}
         T.saved=_G.TrailMatsDB
         for _,key in ipairs({"recipes","selected","observed","scanned","destinations"}) do
@@ -78,7 +79,7 @@ frame:SetScript("OnEvent",function(_,event,name)
         if type(T.saved.levelingPrices)~="table" then T.saved.levelingPrices={} end
         if T.saved.view~="overview" and T.saved.view~="keep" and T.saved.view~="leveling" and T.saved.view~="sell" and T.saved.view~="help" then T.saved.view="overview" end
         T.LoadSettings()
-        T.ConnectDatabase();T.ReadSkills();T.ReadZone();T.CreateWindow();T.CreateTracker();T.InstallTooltips();T.InstallMerchantHook()
+        T.ConnectDatabase();T.ReadSkills();T.ReadZone();T.CreateWindow();T.CreateTracker();T.InstallTooltips();T.InstallMerchantHook();T.InstallReagentHooks()
         T.CreateMinimapButton();T.CreateOptions();T.ApplySettings()
         _G.SLASH_TRAILMATS1="/tm";_G.SLASH_TRAILMATS2="/trailmats"
         SlashCmdList.TRAILMATS=T.Command
@@ -93,7 +94,7 @@ frame:SetScript("OnEvent",function(_,event,name)
     else
         local scan=event=="TRADE_SKILL_SHOW" or event=="TRADE_SKILL_UPDATE" or event=="CRAFT_SHOW" or event=="CRAFT_UPDATE" or event=="NEW_RECIPE_LEARNED" or event=="SKILL_LINES_CHANGED"
         local zone=event=="ZONE_CHANGED_NEW_AREA" or event=="PLAYER_ENTERING_WORLD" or event=="ZONE_CHANGED"
-        if event=="TRADE_SKILL_SHOW" or event=="CRAFT_SHOW" then T.followPending=true end
+        if event=="TRADE_SKILL_SHOW" or event=="CRAFT_SHOW" then T.followPending=true;T.InstallReagentHooks() end
         T.Queue(scan,zone)
     end
 end)

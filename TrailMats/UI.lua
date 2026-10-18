@@ -106,9 +106,11 @@ function T.MaterialSource(m)
     return T.ZoneSource(m.item) or (T.FindSource and T.FindSource(m.item).label) or T.NoLocalSource()
 end
 -- What a click on a material does: a map pin when there is a place, otherwise the hint in chat.
-function T.ClickHint(item)
+-- click names the click for the line ("Click" on the add-on's own rows, "Alt-click" on the game's reagent slots).
+function T.ClickHint(item,click)
     local found=T.FindSource and T.FindSource(item)
-    return found and found.spot and found.spot.map and "Click: mark it on your map." or "Click: show where to get it in chat."
+    click=click or "Click"
+    return found and found.spot and found.spot.map and (click..": mark it on your map.") or (click..": show where to get it in chat.")
 end
 local function locateTooltip(owner,item)
     GameTooltip:SetOwner(owner,"ANCHOR_RIGHT")

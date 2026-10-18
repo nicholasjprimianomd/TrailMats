@@ -23,6 +23,7 @@ Sources.lua
 Locate.lua
 Client.lua
 Actions.lua
+Reagents.lua
 Auction.lua
 Profit.lua
 Settings.lua
