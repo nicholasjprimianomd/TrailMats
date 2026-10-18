@@ -68,7 +68,7 @@ It does not compare every possible recipe, within-band mixture, or buying versus
 
 ## Professions
 
-TrailMats detects every profession your character knows and shows a tab for each. Reviewed leveling plans exist for Leatherworking, Cooking, First Aid, Alchemy, Blacksmithing, Enchanting and Tailoring (through skill 225; the Forever beta could not test further). Engineering shows Next step and Materials from your learned recipes but has no reviewed route yet. Skinning, Herbalism, Mining and Fishing are gathering professions: their tabs follow the paired crafting plan (Leatherworking, Alchemy, Blacksmithing, Cooking) and show where to gather at your skill. Hovering a herb or vein shows the skill it needs next to yours.
+TrailMats detects every profession your character knows and shows a tab for each. Reviewed leveling plans exist for all eight crafting professions: Leatherworking, Cooking, First Aid, Alchemy, Blacksmithing, Enchanting, Engineering and Tailoring (through skill 225; the Forever beta could not test further). Skinning, Herbalism, Mining and Fishing are gathering professions: their tabs follow the paired crafting plan (Leatherworking, Alchemy, Blacksmithing, Cooking) and show where to gather at your skill. Hovering a herb or vein shows the skill it needs next to yours.
 
 ## Limits
 

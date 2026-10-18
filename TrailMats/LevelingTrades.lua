@@ -5,7 +5,7 @@ local _, T = ...
 -- Bands are planning intervals, not exact learning requirements or colour tables. Routes past 225 are
 -- kept for later but T.levelingLimit stays at 225 until they are tested on a live client.
 local recipe,edge=T.DefineRecipe,T.DefineEdge
-for _,p in ipairs({171,164,333,197}) do T.levelingEdges[p]=T.levelingEdges[p] or {} end
+for _,p in ipairs({171,164,333,197,202}) do T.levelingEdges[p]=T.levelingEdges[p] or {} end
 
 -- ===== Alchemy (171) =====
 -- Alchemy (171) leveling data for TrailMats, researched 2026-10-17/18 against the Forever beta.
@@ -256,6 +256,104 @@ local names={[2996]="Bolt of Linen Cloth",[2997]="Bolt of Woolen Cloth",[4305]="
     [2321]="Fine Thread",[8343]="Heavy Silken Thread",[2604]="Red Dye",[3383]="Elixir of Wisdom"} -- 2589, 2592, 2320 are named in Data.lua; 4306, 4338, 4291 already in the LevelingData names block
 for id,name in pairs(names) do T.items[id]=name end
 
+-- ===== Engineering (202) =====
+-- Engineering (skill line 202) leveling data for TrailMats, researched 2026-10-17/18 against the Forever beta (client 1.60.1).
+-- Bands, craft counts, alternatives, keep notes and schematic vendors: https://www.wow-professions.com/forever/engineering-leveling-guide
+--   (re-read 2026-10-18, unchanged since the 2026-10-17 copy in scratchpad guide.txt). The author walked 1-215 on the beta: "the beta
+--   stops at 225 right now" and "The route after 225 is not tested yet"; 215-300 is the Classic route carried over unchanged, kept here
+--   because the guide publishes it. Shopping list 1-225 / 225-300 totals are reproduced by the edges below.
+-- Reagents and item ids: each recipe cites its https://www.wowhead.com/forever/spell=<id> page (all 28 read 2026-10-18; the page markdown
+--   inlines the reagent tree of sub-recipes, e.g. Smelt Copper under Copper Bar, which is not part of the recipe) and the same reagents were
+--   re-read from Wowhead's Forever tooltip data (https://nether.wowhead.com/tooltip/spell/<id>?dataEnv=16&locale=0, cached in scratchpad
+--   tt/ and parsed2.json). Forever spell pages carry no "Requires Engineering" line and no trainer list; the tooltips do carry the former.
+-- Learn levels, colours and trainer source: https://seemeta.com/en/wow-forever/professions/engineering (game version 1.60.1 beta, updated
+--   2026-10-17): "No recipe item, usually learned from a trainer" unless noted. Its colour digits print without separators, so a split
+--   marked "(split)" follows the row structure and the Classic pattern. https://thewowdb.com/wow-forever/guides/professions/engineering/
+--   (client 1.60.1.70205) was read on 2026-10-17 for the same values and answered HTTP 503 on every 2026-10-18 re-check; figures
+--   attributed to it alone are single-source.
+-- Yields: Forever tooltips print a count one higher than the real yield for every recipe (Rough Blasting Powder "(2)", Blacksmithing armor
+--   "(2)"), so yields come from the guide's arithmetic (60 Rough Stone -> 60 powder for 30 bombs x2, 120 Solid Stone -> 60 powder,
+--   120 Mithril Bar -> 40 casings: one per craft for every intermediate) and from seemeta's bold yield numbers (Rough Copper Bomb 2,
+--   Coarse Dynamite 2, Silver Contact 5, Gold Power Core 3, Iron Grenade 3, Hi-Explosive Bomb 4). Live scans override reference outputs (Leveling.lua).
+-- Bars are Mining smelts and stones are Mining by-products; both are gathered raw materials here. Blacksmith Hammer (5956), Arclight Spanner
+--   (6219) and Gyromatic Micro-Adjustor (10498) are tools, not reagents; the two crafted tools are one-craft edges because the guide levels
+--   through them. Weak Flux (2880) is the only vendor supply consumed on this route (Wooden Stock 4399 / Heavy Stock 4400 are gun parts
+--   no route recipe uses). The Gnome racial no longer gives +15 Engineering in Forever (guide), so no race adjustment applies.
+-- Orchestrator: add [202]={} to the T.levelingEdges initializer before these lines. Conversions and supplies are delivered separately.
+-- Apprentice (guide heading 1-50; any Engineering trainer, no level requirement in Forever; Journeyman needs skill 50 and level 10)
+recipe("eg-rough-powder",202,"Rough Blasting Powder",{[2835]=1},"Trainer",{4357,1}) -- https://www.wowhead.com/forever/spell=3918/rough-blasting-powder : Rough Stone 2835 x1 -> 4357; seemeta: learned automatically with the profession rank, orange 1 / yellow 20 / green 30 / grey 40 (thewowdb 2026-10-17: yellow 20, grey 40); guide: keep all 60 for the bombs at 51
+recipe("eg-copper-bolts",202,"Handful of Copper Bolts",{[2840]=1},"Trainer",{4359,1}) -- https://www.wowhead.com/forever/spell=3922/handful-of-copper-bolts : Copper Bar 2840 x1 -> 4359; tool Blacksmith Hammer; seemeta (split): trainer, yellow 45 / green 53 / grey 60; guide: keep all 30 for the bombs
+recipe("eg-spanner",202,"Arclight Spanner",{[2840]=6},"Trainer") -- https://www.wowhead.com/forever/spell=7430/arclight-spanner : Copper Bar x6 -> 6219; tooltip "Requires Engineering (50)"; seemeta (split): trainer, yellow 70 / green 80 / grey 90; a tool, keep it; not consumed, so no output
+recipe("eg-rough-bomb",202,"Rough Copper Bomb",{[2840]=1,[4359]=1,[4357]=2,[2589]=1},"Trainer") -- https://www.wowhead.com/forever/spell=3923/rough-copper-bomb : Copper Bar x1, Handful of Copper Bolts x1, Rough Blasting Powder x2, Linen Cloth 2589 x1 -> 4360; tooltip "Requires Engineering (30)"; seemeta (split): trainer, yield 2, yellow 60 / green 75 / grey 90 (guide: "yellow from 60")
+-- Journeyman (guide heading 50-150; the rank is needed to pass 75: Nogg, Orgrimmar / Franklin Lloyd, Undercity / Lilliam Sparkspindle, Stormwind / Trixie Quikswitch, Ironforge / Finbus Geargrind, Duskwood)
+recipe("eg-coarse-powder",202,"Coarse Blasting Powder",{[2836]=1},"Trainer",{4364,1}) -- https://www.wowhead.com/forever/spell=3929/coarse-blasting-powder : Coarse Stone 2836 x1 -> 4364; seemeta: trainer, yellow 85 / green 90 / grey 95; guide: keep all 60 for the dynamite at 90
+recipe("eg-coarse-dynamite",202,"Coarse Dynamite",{[4364]=3,[2589]=1},"Trainer") -- https://www.wowhead.com/forever/spell=3931/coarse-dynamite : Coarse Blasting Powder x3, Linen Cloth x1 -> 4365; tooltip "Requires Engineering (75)"; seemeta (split): trainer, yield 2 (Classic 1; thewowdb 2026-10-17 also 2), yellow 90 / green 98 / grey 105
+recipe("eg-silver-contact",202,"Silver Contact",{[2842]=1},"Trainer") -- https://www.wowhead.com/forever/spell=3973/silver-contact : Silver Bar 2842 x1 -> 4404; seemeta (split): trainer, yield 5, yellow 110 / green 125 / grey 140; not consumed on this route, so no output
+recipe("eg-tiger-goggles",202,"Flying Tiger Goggles",{[2318]=6,[818]=2},"Trainer") -- https://www.wowhead.com/forever/spell=3934/flying-tiger-goggles : Light Leather 2318 x6, Tigerseye 818 x2 -> 4368; tooltip "Requires Engineering (100)"; tool Arclight Spanner; seemeta (split): trainer, yellow 130 / green 145 / grey 160
+recipe("eg-bronze-tube",202,"Bronze Tube",{[2841]=2,[2880]=1},"Trainer",{4371,1}) -- https://www.wowhead.com/forever/spell=3938/bronze-tube : Bronze Bar 2841 x2, Weak Flux 2880 x1 -> 4371; seemeta (split): trainer, yellow 105 / green 130 / grey 155 (guide: "yellow the whole way"); Weak Flux is sold by Engineering Supply vendors near the trainer (guide; https://www.wowhead.com/forever/item=2880/weak-flux lists vendors in dozens of zones)
+recipe("eg-standard-scope",202,"Standard Scope",{[4371]=1,[1206]=1},"Trainer") -- https://www.wowhead.com/forever/spell=3978/standard-scope : Bronze Tube x1, Moss Agate 1206 x1 -> 4406; tool Arclight Spanner; seemeta (split): trainer, yellow 135 / green 148 / grey 160
+recipe("eg-heavy-powder",202,"Heavy Blasting Powder",{[2838]=1},"Trainer",{4377,1}) -- https://www.wowhead.com/forever/spell=3945/heavy-blasting-powder : Heavy Stone 2838 x1 -> 4377; seemeta (split): trainer, yellow 125 / green 135 / grey 145 (thewowdb 2026-10-17: yellow 125, grey 145)
+recipe("eg-gizmo",202,"Whirring Bronze Gizmo",{[2841]=2,[2592]=1},"Trainer",{4375,1}) -- https://www.wowhead.com/forever/spell=3942/whirring-bronze-gizmo : Bronze Bar x2, Wool Cloth 2592 x1 -> 4375; tools Blacksmith Hammer, Arclight Spanner; seemeta (split): trainer, yellow 125 / green 150 / grey 175; the guide crafts it 135-150
+recipe("eg-framework",202,"Bronze Framework",{[2841]=2,[2319]=1,[2592]=1},"Trainer",{4382,1}) -- https://www.wowhead.com/forever/spell=3953/bronze-framework : Bronze Bar x2, Medium Leather 2319 x1, Wool Cloth x1 -> 4382; seemeta (split): trainer, yellow 145 / green 170 / grey 195; the guide crafts it 150-160 under its Expert heading, learnable from a Journeyman trainer at 145 (seemeta)
+-- Expert (150-200): Roxxik, Orgrimmar / Springspindle Fizzlegear, Ironforge; needs skill 125, level 20, 50 silver (guide)
+recipe("eg-sheep",202,"Explosive Sheep",{[4382]=1,[4375]=1,[4377]=2,[2592]=2},"Expert trainer") -- https://www.wowhead.com/forever/spell=3955/explosive-sheep : Bronze Framework x1, Whirring Bronze Gizmo x1, Heavy Blasting Powder x2, Wool Cloth x2 -> 4384; tooltip "Requires Engineering (150)"; tools Blacksmith Hammer, Arclight Spanner; seemeta (split): trainer, yellow 175 / green 188 / grey 200; guide: keep 5 for the Goblin Engineering quest at 200
+recipe("eg-solid-powder",202,"Solid Blasting Powder",{[7912]=2},"Expert trainer",{10505,1}) -- https://www.wowhead.com/forever/spell=12585/solid-blasting-powder : Solid Stone 7912 x2 -> 10505; seemeta: trainer, yellow 175 / green 185 / grey 195 (thewowdb 2026-10-17: yellow 175, grey 195); guide: save them for Unstable Trigger and Hi-Explosive Bomb
+recipe("eg-iron-grenade",202,"Iron Grenade",{[3575]=1,[4377]=1,[4306]=1},"Expert trainer") -- https://www.wowhead.com/forever/spell=3962/iron-grenade : Iron Bar 3575 x1, Heavy Blasting Powder x1, Silk Cloth 4306 x1 -> 4390; tooltip "Requires Engineering (175)"; seemeta (split): trainer, yield 3 (Classic 2; thewowdb 2026-10-17 also 3), yellow 175 / green 195 / grey 215; seemeta's row was read twice as "Heavy Blasting Powder 3", which the spell page, the tooltip and the guide (20 grenades = 20 powder) all contradict, so 1 is kept
+recipe("eg-micro-adjustor",202,"Gyromatic Micro-Adjustor",{[3859]=4},"Expert trainer") -- https://www.wowhead.com/forever/spell=12590/gyromatic-micro-adjustor : Steel Bar 3859 x4 -> 10498; seemeta: trainer, yellow 175 / green 195 / grey 215; a tool, keep it; not consumed, so no output
+recipe("eg-mithril-tube",202,"Mithril Tube",{[3860]=3},"Expert trainer") -- https://www.wowhead.com/forever/spell=12589/mithril-tube : Mithril Bar 3860 x3 -> 10559; seemeta: trainer, yellow 195 / green 215 / grey 235; guide: keep all 6 for the Gnomish Engineering quest at 200; no route recipe consumes it, so no output
+-- Artisan (200-300): Buzzek Bracketswing, Gadgetzan (Tanaris), both factions; needs skill 200 and level 35, and "He also teaches the recipes above 200" (guide)
+recipe("eg-trigger",202,"Unstable Trigger",{[3860]=1,[4338]=1,[10505]=1},"Artisan trainer",{10560,1}) -- https://www.wowhead.com/forever/spell=12591/unstable-trigger : Mithril Bar x1, Mageweave Cloth 4338 x1, Solid Blasting Powder x1 -> 10560; tools Blacksmith Hammer, Arclight Spanner; seemeta (split): trainer, yellow 200 / green 220 / grey 240; guide: Buzzek teaches it, keep all 20 for the bombs at 238
+recipe("eg-casing",202,"Mithril Casing",{[3860]=3},"Artisan trainer",{10561,1}) -- https://www.wowhead.com/forever/spell=12599/mithril-casing : Mithril Bar x3 -> 10561; tools Blacksmith Hammer, Arclight Spanner; seemeta (split): trainer, yellow 215 / green 235 / grey 255; guide: keep 40 for the bombs
+recipe("eg-hi-explosive",202,"Hi-Explosive Bomb",{[10561]=2,[10560]=1,[10505]=2},"Artisan trainer") -- https://www.wowhead.com/forever/spell=12619/hi-explosive-bomb : Mithril Casing x2, Unstable Trigger x1, Solid Blasting Powder x2 -> 10562; tooltip "Requires Engineering (235)"; seemeta: trainer, yield 4, yellow 235 / green 255 / grey 275
+recipe("eg-dense-powder",202,"Dense Blasting Powder",{[12365]=2},"Artisan trainer") -- https://www.wowhead.com/forever/spell=19788/dense-blasting-powder : Dense Stone 12365 x2 -> 15992; seemeta: trainer, yellow 250 / green 255 / grey 260 (guide: "yellow from 250, so you might need more than 30"); not consumed on this route, so no output
+recipe("eg-widget",202,"Thorium Widget",{[12359]=3,[14047]=1},"Vendor schematic: Sovik (Orgrimmar) or Gearcutter Cogspinner (Ironforge)") -- https://www.wowhead.com/forever/spell=19791/thorium-widget : Thorium Bar 12359 x3, Runecloth 14047 x1 -> 15994; tools Blacksmith Hammer, Arclight Spanner; https://www.wowhead.com/forever/item=16042/schematic-thorium-widget "Requires Engineering (260)", not bound, "can be purchased in Orgrimmar (3) and Ironforge (2)"; seemeta: Schematic: Thorium Widget skill 260, orange 260 / yellow 280 / green 290 / grey 300; vendor names from the guide; not consumed on this route
+recipe("eg-thorium-tube",202,"Thorium Tube",{[12359]=6},"Vendor schematic: Xizzer Fizzbolt (Everlook, Winterspring); bind on pickup") -- https://www.wowhead.com/forever/spell=19795/thorium-tube : Thorium Bar x6 -> 16000; https://www.wowhead.com/forever/item=16047/schematic-thorium-tube "Binds when picked up", "Requires Engineering (275)", "can be purchased in Winterspring (2) and Riverglades"; seemeta: Schematic: Thorium Tube skill 275, orange 275 / yellow 295 / green 305 / grey 315; guide: "buy it with the character that levels Engineering"
+-- Off-route intermediates from the task hint; no edge uses them, they exist so the planner can convert them if a later recipe needs them.
+recipe("eg-copper-tube",202,"Copper Tube",{[2840]=2,[2880]=1},"Trainer",{4361,1}) -- https://www.wowhead.com/forever/spell=3924/copper-tube : Copper Bar x2, Weak Flux x1 -> 4361; seemeta (split): trainer, yellow 80 / green 95 / grey 110
+recipe("eg-iron-strut",202,"Iron Strut",{[3575]=2},"Trainer",{4387,1}) -- https://www.wowhead.com/forever/spell=3958/iron-strut : Iron Bar x2 -> 4387; seemeta: trainer, yellow 160 / green 170 / grey 180
+recipe("eg-power-core",202,"Gold Power Core",{[3577]=1},"Trainer",{10558,3}) -- https://www.wowhead.com/forever/spell=12584/gold-power-core : Gold Bar 3577 x1 -> 10558; seemeta: trainer, bold yield 3, yellow 150 / green 170 / grey 190; the Forever tooltip prints "(4)", one higher as for every recipe
+recipe("eg-gyrochronatom",202,"Gyrochronatom",{[3575]=1,[10558]=1},"Trainer",{4389,1}) -- https://www.wowhead.com/forever/spell=3961/gyrochronatom : Iron Bar x1, Gold Power Core x1 -> 4389; seemeta: trainer, yellow 170 / green 190 / grey 210
+-- Edges: whole-band guide counts; the planner scales them to the skill actually covered (Leveling.lua).
+edge(202,1,30,60,"eg-rough-powder") -- guide 1-30: "60x Rough Blasting Powder - 60 Rough Stone"; keep all 60 for the bombs at 51 https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,30,50,30,"eg-copper-bolts") -- guide 30-50: "30x Handful of Copper Bolts - 30 Copper Bar"; keep all 30 for the bombs https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,50,51,1,"eg-spanner") -- guide 50-51: "1x Arclight Spanner - 6 Copper Bar"; a tool for later recipes, keep it https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,51,75,30,"eg-rough-bomb") -- guide 51-75: "30x Rough Copper Bomb - 30 Copper Bar, 30 Handful of Copper Bolts, 60 Rough Blasting Powder, 30 Linen Cloth"; yellow from 60, may overshoot or fall short of 75, learn Journeyman first https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,75,90,60,"eg-coarse-powder") -- guide 75-90: "60x Coarse Blasting Powder - 60 Coarse Stone"; keep all 60 for the dynamite at 90 https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,90,100,20,"eg-coarse-dynamite") -- guide 90-100: "20x Coarse Dynamite - 60 Coarse Blasting Powder, 20 Linen Cloth" https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,100,105,5,"eg-silver-contact") -- guide 100-105: "5x Silver Contact - 5 Silver Bar" https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,100,105,5,"eg-tiger-goggles") -- guide 100-105 alternative "If Silver Bar is expensive": "5x Flying Tiger Goggles - 30 Light Leather, 10 Tigerseye" https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,105,125,25,"eg-bronze-tube") -- guide 105-125: "25x Bronze Tube - 50 Bronze Bar, 25 Weak Flux"; yellow the whole way, if a few points short start the scopes instead https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,125,135,10,"eg-standard-scope") -- guide 125-135: "10x Standard Scope - 10 Bronze Tube, 10 Moss Agate"; uses 10 of the tubes just made https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,125,135,20,"eg-heavy-powder") -- guide 125-135 alternative "if you don't have any Moss Agate, or it's really expensive": Heavy Blasting Powder with no count given; 20 crafts is an estimate for 10 yellow/green points (seemeta yellow 125, green 135), not a guide figure https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,135,145,30,"eg-heavy-powder") -- guide 135-150 "Make both of these ... in the same order": "30x Heavy Blasting Powder - 30 Heavy Stone"; split at its grey point 145 (seemeta/thewowdb), keep all 30 for the sheep https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,145,150,15,"eg-gizmo") -- guide 135-150 second half: "15x Whirring Bronze Gizmo - 30 Bronze Bar, 15 Wool Cloth"; keep all 15 for the sheep; the 145 split is a modelling choice, the guide gives one 135-150 band https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,150,160,15,"eg-framework") -- guide 150-160: "15x Bronze Framework - 30 Bronze Bar, 15 Medium Leather, 15 Wool Cloth"; keep all 15 for the sheep, "will probably take you past 160" https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,160,175,15,"eg-sheep") -- guide 160-175: "15x Explosive Sheep - 30 Heavy Blasting Powder, 15 Whirring Bronze Gizmo, 15 Bronze Framework, 30 Wool Cloth"; keep 5 for Goblin Engineering https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,175,194,60,"eg-solid-powder") -- guide 175-194: "60x Solid Blasting Powder - 120 Solid Stone"; save them, 20 go into Unstable Trigger and 40 into Hi-Explosive Bomb https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,175,194,20,"eg-iron-grenade") -- guide 175-194 beta alternative ("Solid Stone is expensive right now"): "10x Solid Blasting Powder - 20 Solid Stone" then "20x Iron Grenade - 20 Iron Bar, 20 Heavy Blasting Powder, 20 Silk Cloth"; the 10 powders are made on demand by conversion for Unstable Trigger and get no skill credit https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,194,195,1,"eg-micro-adjustor") -- guide 194-195: "1x Gyromatic Micro-Adjustor - 4 Steel Bar"; a tool, keep it; if short of 195 craft a few more Iron Grenade https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,195,200,6,"eg-mithril-tube") -- guide 195-200: "6x Mithril Tube - 18 Mithril Bar"; keep all 6 for Gnomish Engineering https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,200,215,20,"eg-trigger") -- guide 200-215: "20x Unstable Trigger - 20 Mithril Bar, 20 Mageweave Cloth, 20 Solid Blasting Powder"; keep all 20 for the bombs at 238; last band the author tested on the beta https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,215,238,40,"eg-casing") -- guide 215-238: "40x Mithril Casing - 120 Mithril Bar"; keep 40 for the bombs; "The route after 225 is not tested yet" https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,238,250,20,"eg-hi-explosive") -- guide 238-250: "20x Hi-Explosive Bomb - 40 Mithril Casing, 20 Unstable Trigger, 40 Solid Blasting Powder"; untested on the beta https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,250,260,30,"eg-dense-powder") -- guide 250-260: "30x Dense Blasting Powder - 60 Dense Stone"; "yellow from 250, so you might need more than 30"; untested on the beta https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,260,285,35,"eg-widget") -- guide 260-285: "35x Thorium Widget - 105 Thorium Bar, 35 Runecloth"; schematic from Sovik (Orgrimmar) or Gearcutter Cogspinner (Ironforge); untested on the beta https://www.wow-professions.com/forever/engineering-leveling-guide
+edge(202,285,300,20,"eg-thorium-tube") -- guide 285-300: "20x Thorium Tube - 120 Thorium Bar"; schematic from Xizzer Fizzbolt (Everlook), bind on pickup; untested on the beta https://www.wow-professions.com/forever/engineering-leveling-guide
+-- No faction-only recipe on this route: trainers differ by faction, recipes do not, and each schematic has a Horde and an Alliance or neutral seller,
+-- so there are no T.levelingRecipes[key].faction assignments. The guide's 200-300 route uses no Gnomish- or Goblin-only recipe, so the
+-- specialisation adds no per-branch alternative edges; only the keep notes (5 Explosive Sheep, 6 Mithril Tube) refer to it.
+local names={[2835]="Rough Stone",[2836]="Coarse Stone",[2838]="Heavy Stone",[7912]="Solid Stone",[12365]="Dense Stone",
+    [2840]="Copper Bar",[2841]="Bronze Bar",[2842]="Silver Bar",[3575]="Iron Bar",[3577]="Gold Bar",[3859]="Steel Bar",
+    [3860]="Mithril Bar",[12359]="Thorium Bar",[818]="Tigerseye",[14047]="Runecloth",[2880]="Weak Flux",
+    [4357]="Rough Blasting Powder",[4359]="Handful of Copper Bolts",[4364]="Coarse Blasting Powder",[4371]="Bronze Tube",
+    [4377]="Heavy Blasting Powder",[4375]="Whirring Bronze Gizmo",[4382]="Bronze Framework",[10505]="Solid Blasting Powder",
+    [10560]="Unstable Trigger",[10561]="Mithril Casing",[4361]="Copper Tube",[4387]="Iron Strut",[10558]="Gold Power Core",
+    [4389]="Gyrochronatom"} -- 2589 Linen Cloth, 2592 Wool Cloth, 2318 Light Leather, 2319 Medium Leather, 1206 Moss Agate, 4306 Silk Cloth and 4338 Mageweave Cloth are already named in Data.lua or LevelingData.lua
+for id,name in pairs(names) do T.items[id]=name end
+-- Delivered separately (not assigned here): supplies 2880 Weak Flux; conversions 4357 eg-rough-powder, 4359 eg-copper-bolts,
+-- 4364 eg-coarse-powder, 4371 eg-bronze-tube, 4377 eg-heavy-powder, 4375 eg-gizmo, 4382 eg-framework, 10505 eg-solid-powder,
+-- 10560 eg-trigger, 10561 eg-casing, 4361 eg-copper-tube, 4387 eg-iron-strut, 10558 eg-power-core, 4389 eg-gyrochronatom.
+
 -- Intermediates the routes may have to prepare, vendor supplies and item names for the new routes.
 T.levelingConversions[6371]="al-fire-oil"
 T.levelingConversions[13423]="al-stonescale-oil"
@@ -269,3 +367,20 @@ T.levelingConversions[4305]="ta-bolt-silk"
 T.levelingConversions[4339]="ta-bolt-mageweave"
 for _,id in ipairs({2320,2321,2604,2605,2880,3371,3372,3466,3857,4291,6217,8343,8925,17034,17035,18256,247786}) do T.levelingSupplies[id]=true end
 for id,name in pairs({[765]="Silverleaf",[785]="Mageroyal",[1210]="Shadowgem",[2320]="Coarse Thread",[2321]="Fine Thread",[2447]="Peacebloom",[2449]="Earthroot",[2450]="Briarthorn",[2589]="Linen Cloth",[2592]="Wool Cloth",[2604]="Red Dye",[2605]="Green Dye",[2835]="Rough Stone",[2836]="Coarse Stone",[2838]="Heavy Stone",[2840]="Copper Bar",[2841]="Bronze Bar",[2842]="Silver Bar",[2880]="Weak Flux",[2996]="Bolt of Linen Cloth",[2997]="Bolt of Woolen Cloth",[3356]="Kingsblood",[3357]="Liferoot",[3371]="Empty Vial",[3372]="Leaded Vial",[3383]="Elixir of Wisdom",[3466]="Strong Flux",[3470]="Rough Grinding Stone",[3478]="Coarse Grinding Stone",[3486]="Heavy Grinding Stone",[3575]="Iron Bar",[3820]="Stranglekelp",[3857]="Coal",[3859]="Steel Bar",[3860]="Mithril Bar",[4291]="Silken Thread",[4305]="Bolt of Silk Cloth",[4306]="Silk Cloth",[4338]="Mageweave Cloth",[4339]="Bolt of Mageweave",[5500]="Iridescent Pearl",[6217]="Copper Rod",[6218]="Runed Copper Rod",[6338]="Silver Rod",[6339]="Runed Silver Rod",[6359]="Firefin Snapper",[6371]="Fire Oil",[7912]="Solid Stone",[7966]="Solid Grinding Stone",[7971]="Black Pearl",[8343]="Heavy Silken Thread",[8831]="Purple Lotus",[8836]="Arthas' Tears",[8838]="Sungrass",[8839]="Blindweed",[8845]="Ghost Mushroom",[8925]="Crystal Vial",[10938]="Lesser Magic Essence",[10940]="Strange Dust",[11082]="Greater Astral Essence",[11083]="Soul Dust",[11128]="Golden Rod",[11130]="Runed Golden Rod",[11135]="Greater Mystic Essence",[11137]="Vision Dust",[11144]="Truesilver Rod",[11145]="Runed Truesilver Rod",[11174]="Lesser Nether Essence",[11176]="Dream Dust",[13422]="Stonescale Eel",[13423]="Stonescale Oil",[13466]="Plaguebloom",[13926]="Golden Pearl",[14343]="Small Brilliant Shard",[14344]="Large Brilliant Shard",[16203]="Greater Eternal Essence",[16204]="Illusion Dust",[16206]="Arcanite Rod",[16207]="Runed Arcanite Rod",[17034]="Maple Seed",[17035]="Stranglethorn Seed",[18256]="Imbued Vial",[20745]="Minor Mana Oil",[20746]="Lesser Wizard Oil",[20747]="Lesser Mana Oil",[247786]="Mote of Magic"}) do T.items[id]=T.items[id] or name end
+-- Engineering intermediates, its vendor supply and item names.
+T.levelingConversions[4357]="eg-rough-powder"
+T.levelingConversions[4359]="eg-copper-bolts"
+T.levelingConversions[4364]="eg-coarse-powder"
+T.levelingConversions[4371]="eg-bronze-tube"
+T.levelingConversions[4377]="eg-heavy-powder"
+T.levelingConversions[4375]="eg-gizmo"
+T.levelingConversions[4382]="eg-framework"
+T.levelingConversions[10505]="eg-solid-powder"
+T.levelingConversions[10560]="eg-trigger"
+T.levelingConversions[10561]="eg-casing"
+T.levelingConversions[4361]="eg-copper-tube"
+T.levelingConversions[4387]="eg-iron-strut"
+T.levelingConversions[10558]="eg-power-core"
+T.levelingConversions[4389]="eg-gyrochronatom"
+for _,id in ipairs({2880}) do T.levelingSupplies[id]=true end
+for id,name in pairs({[818]="Tigerseye",[2835]="Rough Stone",[2836]="Coarse Stone",[2838]="Heavy Stone",[2840]="Copper Bar",[2841]="Bronze Bar",[2842]="Silver Bar",[2880]="Weak Flux",[3575]="Iron Bar",[3577]="Gold Bar",[3859]="Steel Bar",[3860]="Mithril Bar",[4357]="Rough Blasting Powder",[4359]="Handful of Copper Bolts",[4361]="Copper Tube",[4364]="Coarse Blasting Powder",[4371]="Bronze Tube",[4375]="Whirring Bronze Gizmo",[4377]="Heavy Blasting Powder",[4382]="Bronze Framework",[4387]="Iron Strut",[4389]="Gyrochronatom",[7912]="Solid Stone",[10505]="Solid Blasting Powder",[10558]="Gold Power Core",[10560]="Unstable Trigger",[10561]="Mithril Casing",[12359]="Thorium Bar",[12365]="Dense Stone",[14047]="Runecloth"}) do T.items[id]=T.items[id] or name end
