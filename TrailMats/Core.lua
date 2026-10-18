@@ -49,7 +49,7 @@ function T.Command(command)
     elseif command=="tips" then T.saved.tooltips=not T.saved.tooltips;T.Print("Tooltips "..(T.saved.tooltips and "on." or "off."))
     elseif command=="auto" then T.saved.destinations={};T.saved.selected={};T.Refresh(false,false);T.Print("Default destinations restored.")
     elseif command=="status" then
-        T.Print("v0.10.0 | "..T.zoneName.." | QuestieDB "..(T.qdb and "connected" or "unavailable"))
+        T.Print("v0.10.1 | "..T.zoneName.." | QuestieDB "..(T.qdb and "connected" or "unavailable"))
         for _,id in ipairs(T.order) do local s=T.skills[id];if s then T.Print(T.professions[id].name.." "..s.rank.."/"..s.cap..(T.saved.scanned[id] and " (recipes read)" or "")) end end
     else
         T.saved.hidden=T.window:IsShown()

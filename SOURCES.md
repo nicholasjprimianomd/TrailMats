@@ -1,5 +1,9 @@
 # Data provenance and implementation notes
 
+## 0.10.1 zone notices, 2026-10-17
+
+Zone notices now wait until the client reports a zone name, and repeats are detected by that name. Before, the first refresh after a loading screen could announce "Unknown zone" before the map resolved. A zone outside TrailMats' own table could also be announced twice when Questie's area ID arrived after its name. No data sources or planner behavior changed. A simulated loading-screen test covers both cases; the live game still needs a check.
+
 ## 0.10.0 database-driven Materials, reviewed 2026-10-07
 
 Replaces the held-only Keep screen with the next efficient recipe's material checklist, including ingredients with zero bag count. It reuses the existing reviewed recipe intervals, joining consecutive intervals for one recipe to its automatic stopping point. No new skill-up probabilities or farming speed claims are introduced. At First Aid 72/150, the Heavy Linen reference spans the remaining steps through 80; the estimate is 16 crafts / 32 Linen Cloth. Live recipe colors still override inefficient choices.

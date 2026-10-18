@@ -2,7 +2,7 @@
 ## Title: TrailMats
 ## Notes: What to craft, gather and keep while leveling.
 ## Author: Nick
-## Version: 0.10.0
+## Version: 0.10.1
 ## OptionalDeps: QuestieDB, Questie
 ## SavedVariablesPerCharacter: TrailMatsDB
 

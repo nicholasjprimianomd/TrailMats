@@ -173,5 +173,5 @@ function T.RenderHelp(row)
     row("Sources come from the database.","QuestieDB and profession references supply locations without waiting for personal loot. Some records retain Classic references. No listed source means the data has no match here, not proof of absence.")
     row("All counts use bags only.","Bank, mail and other characters are excluded. Fishing and Skinning share material goals with Cooking and Leatherworking when those professions are learned. Nothing is bought or crafted automatically.")
     row("Commands", "/tm: open or close\n/tm now, /tm keep, /tm mats: change view\n/tm track: toggle tracker for selected profession\n/tm refresh: update recipes and sources\n/tm quiet: zone notices\n/tm tips: item and creature tooltips\n/tm auto: reset destination and recipe choices\n/tm status: version and database status")
-    row("Version 0.10.0", "WoW Forever. Supported professions: Leatherworking, Cooking, First Aid, Skinning and Fishing. Guide coverage and live recipe availability can differ during the beta.")
+    row("Version 0.10.1", "WoW Forever. Supported professions: Leatherworking, Cooking, First Aid, Skinning and Fishing. Guide coverage and live recipe availability can differ during the beta.")
 end
