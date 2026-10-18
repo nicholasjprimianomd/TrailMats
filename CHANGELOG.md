@@ -2,6 +2,10 @@
 
 TrailMats is a profession companion for World of Warcraft: Forever. Counts are estimates; nothing is bought, crafted or trained automatically. Dates are tag dates. Downloads: https://github.com/nicholasjprimianomd/TrailMats/releases
 
+## Unreleased
+
+- Tailoring route follows the revised Forever guide: more Silk and Mageweave bolts, Gloves of Meditation at 120-125 and 125-140, and Red Swashbuckler's Shirt as the 140-150 alternative.
+
 ## 0.12.0 (2026-10-18)
 
 - All twelve Forever professions are detected and get a tab. Reviewed leveling routes added for Alchemy, Blacksmithing, Enchanting, Engineering and Tailoring (to skill 225), each recipe and band cited to its Forever source.
